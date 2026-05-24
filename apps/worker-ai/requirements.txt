@@ -1,0 +1,10 @@
+psycopg[binary]==3.2.3
+python-dotenv==1.0.1
+pydantic==2.9.2
+openai==1.82.0
+langchain==0.3.25
+langchain-openai==0.3.18
+langchain-core==0.3.86
+langfuse==2.60.3
+Pillow==12.0.0
+pytest==8.3.5
