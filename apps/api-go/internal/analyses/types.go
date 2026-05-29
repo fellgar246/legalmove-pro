@@ -18,15 +18,17 @@ const (
 )
 
 type AnalysisJob struct {
-	ID                    uuid.UUID
-	OriginalDocumentID    uuid.UUID
-	AmendmentDocumentID   uuid.UUID
-	Status                JobStatus
-	ErrorMessage          *string
-	StartedAt             *time.Time
-	CompletedAt           *time.Time
-	CreatedAt             time.Time
-	UpdatedAt             time.Time
+	ID                          uuid.UUID
+	OriginalDocumentID          uuid.UUID
+	AmendmentDocumentID         uuid.UUID
+	OriginalDocumentFilename    string
+	AmendmentDocumentFilename   string
+	Status                      JobStatus
+	ErrorMessage                *string
+	StartedAt                   *time.Time
+	CompletedAt                 *time.Time
+	CreatedAt                   time.Time
+	UpdatedAt                   time.Time
 }
 
 type CreateRequest struct {
@@ -43,15 +45,23 @@ type CreateResponse struct {
 }
 
 type AnalysisResponse struct {
-	ID                    uuid.UUID  `json:"id"`
-	OriginalDocumentID    uuid.UUID  `json:"original_document_id"`
-	AmendmentDocumentID   uuid.UUID  `json:"amendment_document_id"`
-	Status                JobStatus  `json:"status"`
-	ErrorMessage          *string    `json:"error_message"`
-	StartedAt             *time.Time `json:"started_at"`
-	CompletedAt           *time.Time `json:"completed_at"`
-	CreatedAt             time.Time  `json:"created_at"`
-	UpdatedAt             time.Time  `json:"updated_at"`
+	ID                          uuid.UUID  `json:"id"`
+	OriginalDocumentID          uuid.UUID  `json:"original_document_id"`
+	AmendmentDocumentID         uuid.UUID  `json:"amendment_document_id"`
+	OriginalDocumentFilename    string     `json:"original_document_filename,omitempty"`
+	AmendmentDocumentFilename   string     `json:"amendment_document_filename,omitempty"`
+	Status                      JobStatus  `json:"status"`
+	ErrorMessage                *string    `json:"error_message"`
+	StartedAt                   *time.Time `json:"started_at"`
+	CompletedAt                 *time.Time `json:"completed_at"`
+	CreatedAt                   time.Time  `json:"created_at"`
+	UpdatedAt                   time.Time  `json:"updated_at"`
+}
+
+type ListResponse struct {
+	Items  []AnalysisResponse `json:"items"`
+	Limit  int                `json:"limit"`
+	Offset int                `json:"offset"`
 }
 
 func ToCreateResponse(job AnalysisJob) CreateResponse {
@@ -66,15 +76,17 @@ func ToCreateResponse(job AnalysisJob) CreateResponse {
 
 func ToAnalysisResponse(job AnalysisJob) AnalysisResponse {
 	return AnalysisResponse{
-		ID:                  job.ID,
-		OriginalDocumentID:  job.OriginalDocumentID,
-		AmendmentDocumentID: job.AmendmentDocumentID,
-		Status:              job.Status,
-		ErrorMessage:        job.ErrorMessage,
-		StartedAt:           job.StartedAt,
-		CompletedAt:         job.CompletedAt,
-		CreatedAt:           job.CreatedAt,
-		UpdatedAt:           job.UpdatedAt,
+		ID:                        job.ID,
+		OriginalDocumentID:        job.OriginalDocumentID,
+		AmendmentDocumentID:       job.AmendmentDocumentID,
+		OriginalDocumentFilename:  job.OriginalDocumentFilename,
+		AmendmentDocumentFilename: job.AmendmentDocumentFilename,
+		Status:                    job.Status,
+		ErrorMessage:              job.ErrorMessage,
+		StartedAt:                 job.StartedAt,
+		CompletedAt:               job.CompletedAt,
+		CreatedAt:                 job.CreatedAt,
+		UpdatedAt:                 job.UpdatedAt,
 	}
 }
 

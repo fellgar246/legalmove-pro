@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"errors"
 	"net/http"
+	"strconv"
 
 	"github.com/felipegarcia/legalmove-pro/apps/api-go/internal/documents"
 	"github.com/go-chi/chi/v5"
@@ -86,6 +87,51 @@ func (h *Handler) Create(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusCreated)
 	_ = json.NewEncoder(w).Encode(ToCreateResponse(job))
+}
+
+func parseListParams(r *http.Request) (limit, offset int) {
+	limit = 20
+	offset = 0
+
+	if raw := r.URL.Query().Get("limit"); raw != "" {
+		if parsed, err := strconv.Atoi(raw); err == nil && parsed > 0 {
+			limit = parsed
+		}
+	}
+	if limit > 100 {
+		limit = 100
+	}
+
+	if raw := r.URL.Query().Get("offset"); raw != "" {
+		if parsed, err := strconv.Atoi(raw); err == nil && parsed >= 0 {
+			offset = parsed
+		}
+	}
+
+	return limit, offset
+}
+
+func (h *Handler) List(w http.ResponseWriter, r *http.Request) {
+	limit, offset := parseListParams(r)
+
+	jobs, err := h.repo.List(r.Context(), limit, offset)
+	if err != nil {
+		writeError(w, http.StatusInternalServerError, "failed to list analysis jobs")
+		return
+	}
+
+	items := make([]AnalysisResponse, 0, len(jobs))
+	for _, job := range jobs {
+		items = append(items, ToAnalysisResponse(job))
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	_ = json.NewEncoder(w).Encode(ListResponse{
+		Items:  items,
+		Limit:  limit,
+		Offset: offset,
+	})
 }
 
 func (h *Handler) GetByID(w http.ResponseWriter, r *http.Request) {

@@ -1,9 +1,128 @@
+# =============================================================================
+# LegalMove Pro — .gitignore
+# Monorepo: Go API, Python worker, Next.js frontend
+# =============================================================================
+
+# --- Environment & secrets (never commit) ------------------------------------
 .env
-apps/api-go/uploads/
-apps/worker-ai/outputs/*.json
-*.log
-.venv/
-__pycache__/
-.pytest_cache/
-*.pyc
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+.env.*.local
+*.pem
+*.key
+credentials.json
+secrets.json
+
+# Keep env templates
+!.env.example
+!**/.env.example
+
+# --- OS / editor noise -------------------------------------------------------
 .DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+*~
+*.swp
+*.swo
+*.tmp
+*.temp
+
+# --- IDEs --------------------------------------------------------------------
+.idea/
+.vscode/*
+!.vscode/extensions.json
+!.vscode/settings.json.example
+*.sublime-project
+*.sublime-workspace
+*.code-workspace
+
+# --- Logs & runtime ----------------------------------------------------------
+*.log
+logs/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+# --- Go (apps/api-go) --------------------------------------------------------
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+*.test
+*.out
+coverage.out
+coverage.txt
+coverage.html
+/apps/api-go/bin/
+/apps/api-go/dist/
+/vendor/
+
+# --- Python (apps/worker-ai) -------------------------------------------------
+.venv/
+venv/
+ENV/
+env/
+__pycache__/
+*.py[cod]
+*$py.class
+*.pyo
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.tox/
+.nox/
+htmlcov/
+.coverage
+.coverage.*
+*.egg
+*.egg-info/
+.eggs/
+dist/
+build/
+*.manifest
+*.spec
+pip-log.txt
+pip-delete-this-directory.txt
+
+# Worker runtime outputs & generated test assets
+apps/worker-ai/outputs/
+!apps/worker-ai/outputs/.gitkeep
+apps/worker-ai/data/test_contracts/
+
+# --- Node / Next.js (apps/web) -----------------------------------------------
+node_modules/
+.pnp
+.pnp.js
+.yarn/install-state.gz
+
+.next/
+out/
+.turbo/
+.vercel
+
+*.tsbuildinfo
+.eslintcache
+
+# --- Uploads & local user data -----------------------------------------------
+apps/api-go/uploads/
+uploads/
+*.upload
+
+# --- Docker (local overrides only) -------------------------------------------
+docker-compose.override.yml
+docker-compose.*.local.yml
+
+# --- Misc build / cache ------------------------------------------------------
+.cache/
+.parcel-cache/
+*.local
