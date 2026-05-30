@@ -8,24 +8,26 @@ import (
 type StorageProvider string
 
 const (
-	ProviderLocal StorageProvider = "local"
-	ProviderS3    StorageProvider = "s3"
+	StorageProviderLocal StorageProvider = "local"
+	StorageProviderS3    StorageProvider = "s3"
 )
 
 type SaveObjectInput struct {
-	Key              string
-	Body             io.Reader
-	OriginalFilename string
-	ContentType      string
+	Key          string
+	Reader       io.Reader
+	OriginalName string
+	ContentType  string
+	SizeBytes    int64
+	DocumentKind string
 }
 
 type StoredObject struct {
-	Provider         StorageProvider
-	Key              string
-	StoragePath      string
-	Size             int64
-	OriginalFilename string
-	ContentType      string
+	Provider     StorageProvider
+	Key          string
+	LocalPath    string
+	OriginalName string
+	ContentType  string
+	SizeBytes    int64
 }
 
 type StorageService interface {

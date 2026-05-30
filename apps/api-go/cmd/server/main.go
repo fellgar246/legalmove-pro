@@ -31,7 +31,10 @@ func main() {
 	defer pool.Close()
 
 	docRepo := documents.NewRepository(pool)
-	storageSvc := storage.NewLocalStorageService(cfg.UploadsDir)
+	storageSvc, err := storage.NewService(cfg.StorageProvider, cfg.UploadsDir)
+	if err != nil {
+		log.Fatalf("init storage: %v", err)
+	}
 	docHandler := documents.NewHandler(docRepo, storageSvc)
 
 	analysisRepo := analyses.NewRepository(pool)
@@ -43,7 +46,12 @@ func main() {
 	})
 	addr := fmt.Sprintf(":%d", cfg.APIPort)
 
-	log.Printf("starting legalmove-api on %s (env=%s)", addr, cfg.AppEnv)
+	log.Printf(
+		"starting legalmove-api on %s (env=%s, storage=%s)",
+		addr,
+		cfg.AppEnv,
+		cfg.StorageProvider,
+	)
 	if err := http.ListenAndServe(addr, router); err != nil {
 		log.Fatalf("server error: %v", err)
 	}

@@ -15,10 +15,10 @@ func TestLocalStorageSaveOpenDeleteRoundTrip(t *testing.T) {
 	svc := NewLocalStorageService(tempDir)
 
 	input := SaveObjectInput{
-		Key:              "test-object.pdf",
-		Body:             strings.NewReader("contract-content"),
-		OriginalFilename: "original.pdf",
-		ContentType:      "application/pdf",
+		Key:          "test-object.pdf",
+		Reader:       strings.NewReader("contract-content"),
+		OriginalName: "original.pdf",
+		ContentType:  "application/pdf",
 	}
 
 	saved, err := svc.Save(context.Background(), input)
@@ -26,18 +26,18 @@ func TestLocalStorageSaveOpenDeleteRoundTrip(t *testing.T) {
 		t.Fatalf("Save() error = %v", err)
 	}
 
-	if saved.Provider != ProviderLocal {
-		t.Fatalf("Provider = %q, want %q", saved.Provider, ProviderLocal)
+	if saved.Provider != StorageProviderLocal {
+		t.Fatalf("Provider = %q, want %q", saved.Provider, StorageProviderLocal)
 	}
 	if saved.Key != input.Key {
 		t.Fatalf("Key = %q, want %q", saved.Key, input.Key)
 	}
 	wantPath := filepath.Join(tempDir, "test-object.pdf")
-	if saved.StoragePath != wantPath {
-		t.Fatalf("StoragePath = %q, want %q", saved.StoragePath, wantPath)
+	if saved.LocalPath != wantPath {
+		t.Fatalf("LocalPath = %q, want %q", saved.LocalPath, wantPath)
 	}
-	if saved.Size != int64(len("contract-content")) {
-		t.Fatalf("Size = %d, want %d", saved.Size, len("contract-content"))
+	if saved.SizeBytes != int64(len("contract-content")) {
+		t.Fatalf("SizeBytes = %d, want %d", saved.SizeBytes, len("contract-content"))
 	}
 
 	rc, err := svc.Open(context.Background(), input.Key)
@@ -70,10 +70,40 @@ func TestLocalStorageRejectsPathTraversalKey(t *testing.T) {
 	svc := NewLocalStorageService(tempDir)
 
 	_, err := svc.Save(context.Background(), SaveObjectInput{
-		Key:  "../escape.txt",
-		Body: strings.NewReader("x"),
+		Key:    "../escape.txt",
+		Reader: strings.NewReader("x"),
 	})
 	if err == nil {
 		t.Fatalf("Save() should reject traversal keys")
+	}
+}
+
+func TestLocalStorageRejectsAbsoluteKey(t *testing.T) {
+	t.Parallel()
+
+	tempDir := t.TempDir()
+	svc := NewLocalStorageService(tempDir)
+
+	_, err := svc.Save(context.Background(), SaveObjectInput{
+		Key:    "/etc/passwd",
+		Reader: strings.NewReader("x"),
+	})
+	if err == nil {
+		t.Fatalf("Save() should reject absolute keys")
+	}
+}
+
+func TestLocalStorageRejectsEmptyKey(t *testing.T) {
+	t.Parallel()
+
+	tempDir := t.TempDir()
+	svc := NewLocalStorageService(tempDir)
+
+	_, err := svc.Save(context.Background(), SaveObjectInput{
+		Key:    "   ",
+		Reader: strings.NewReader("x"),
+	})
+	if err == nil {
+		t.Fatalf("Save() should reject empty keys")
 	}
 }

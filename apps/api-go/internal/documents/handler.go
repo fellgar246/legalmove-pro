@@ -77,10 +77,10 @@ func (h *Handler) Upload(w http.ResponseWriter, r *http.Request) {
 	id := uuid.New()
 	storedName := id.String() + filepath.Ext(originalFilename)
 	savedObject, err := h.storage.Save(r.Context(), storage.SaveObjectInput{
-		Key:              storedName,
-		Body:             file,
-		OriginalFilename: originalFilename,
-		ContentType:      header.Header.Get("Content-Type"),
+		Key:          storedName,
+		Reader:       file,
+		OriginalName: originalFilename,
+		ContentType:  header.Header.Get("Content-Type"),
 	})
 	if err != nil {
 		writeError(w, http.StatusInternalServerError, "failed to save file")
@@ -97,8 +97,8 @@ func (h *Handler) Upload(w http.ResponseWriter, r *http.Request) {
 		Filename:         storedName,
 		OriginalFilename: originalFilename,
 		MimeType:         mimeType,
-		FileSize:         savedObject.Size,
-		StoragePath:      savedObject.StoragePath,
+		FileSize:         savedObject.SizeBytes,
+		StoragePath:      savedObject.LocalPath,
 		DocumentRole:     role,
 	})
 	if err != nil {

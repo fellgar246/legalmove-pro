@@ -30,7 +30,7 @@ func (s *LocalStorageService) Save(ctx context.Context, input SaveObjectInput) (
 		return nil, fmt.Errorf("create object %q: %w", input.Key, err)
 	}
 
-	size, copyErr := io.Copy(dst, input.Body)
+	size, copyErr := io.Copy(dst, input.Reader)
 	closeErr := dst.Close()
 	if copyErr != nil {
 		_ = os.Remove(targetPath)
@@ -42,12 +42,12 @@ func (s *LocalStorageService) Save(ctx context.Context, input SaveObjectInput) (
 	}
 
 	return &StoredObject{
-		Provider:         ProviderLocal,
-		Key:              input.Key,
-		StoragePath:      targetPath,
-		Size:             size,
-		OriginalFilename: input.OriginalFilename,
-		ContentType:      input.ContentType,
+		Provider:     StorageProviderLocal,
+		Key:          input.Key,
+		LocalPath:    targetPath,
+		SizeBytes:    size,
+		OriginalName: input.OriginalName,
+		ContentType:  input.ContentType,
 	}, nil
 }
 

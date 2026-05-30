@@ -226,3 +226,59 @@ func TestUploadGeneratesUUIDBasedFilename(t *testing.T) {
 		t.Fatalf("Filename ext = %q, want .jpeg", filepath.Ext(captured.Filename))
 	}
 }
+
+func TestUploadImagePersistsStoragePathCompatibleWithWorker(t *testing.T) {
+	t.Parallel()
+
+	uploadsDir := t.TempDir()
+	storageSvc := storage.NewLocalStorageService(uploadsDir)
+
+	var captured CreateInput
+	repo := &stubRepo{
+		createFn: func(_ context.Context, input CreateInput) (Document, error) {
+			captured = input
+			return Document{
+				ID:               input.ID,
+				Filename:         input.Filename,
+				OriginalFilename: input.OriginalFilename,
+				MimeType:         input.MimeType,
+				FileSize:         input.FileSize,
+				StoragePath:      input.StoragePath,
+				DocumentRole:     input.DocumentRole,
+				Status:           "UPLOADED",
+				CreatedAt:        time.Now(),
+			}, nil
+		},
+	}
+	handler := NewHandler(repo, storageSvc)
+
+	req := buildMultipartUploadRequest(t, "AMENDMENT", "amendment.png", []byte("png-bytes"))
+	rr := httptest.NewRecorder()
+	handler.Upload(rr, req)
+
+	if rr.Code != http.StatusCreated {
+		t.Fatalf("status = %d, want %d, body=%s", rr.Code, http.StatusCreated, rr.Body.String())
+	}
+
+	if captured.OriginalFilename != "amendment.png" {
+		t.Fatalf("OriginalFilename = %q, want %q", captured.OriginalFilename, "amendment.png")
+	}
+	if filepath.Ext(captured.Filename) != ".png" {
+		t.Fatalf("Filename ext = %q, want .png", filepath.Ext(captured.Filename))
+	}
+	if captured.StoragePath != filepath.Join(uploadsDir, captured.Filename) {
+		t.Fatalf(
+			"StoragePath = %q, want %q",
+			captured.StoragePath,
+			filepath.Join(uploadsDir, captured.Filename),
+		)
+	}
+
+	rawFile, err := os.ReadFile(captured.StoragePath)
+	if err != nil {
+		t.Fatalf("ReadFile(%q) error = %v", captured.StoragePath, err)
+	}
+	if string(rawFile) != "png-bytes" {
+		t.Fatalf("stored file content = %q, want %q", string(rawFile), "png-bytes")
+	}
+}
