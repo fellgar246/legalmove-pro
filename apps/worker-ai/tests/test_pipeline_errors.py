@@ -75,7 +75,7 @@ def test_run_contract_analysis_continues_when_langfuse_trace_fails(tmp_path, mon
     with patch.object(contract_analysis, "_build_langfuse_client", side_effect=RuntimeError("langfuse down")):
         with patch.object(
             contract_analysis,
-            "parse_contract_image_with_metadata",
+            "parse_contract_document_with_metadata",
             side_effect=[
                 ImageParseResult(text="original text", model="gpt-4o", usage={}),
                 ImageParseResult(text="amendment text", model="gpt-4o", usage={}),

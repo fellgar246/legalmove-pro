@@ -19,6 +19,16 @@ _DOCUMENT_VALUE_MARKERS = (
     "cannot read or decode image",
     "image not found",
     "image format",
+    "unsupported document format",
+    "document not found",
+    "pdf not found",
+    "not a valid pdf",
+    "pdf file is empty",
+    "pdf file is too large",
+    "cannot read pdf",
+    "pdf is encrypted",
+    "pdf appears to be scanned",
+    "no extractable embedded text",
 )
 
 _OCR_VALUE_MARKERS = (
@@ -112,7 +122,8 @@ def wrap_pipeline_exception(exc: BaseException) -> PipelineError:
                 )
             )
         return PipelineError(
-            _normalize_message("An unexpected error occurred during contract analysis.")
+            _normalize_message(
+                "An unexpected error occurred during contract analysis.")
         )
 
     if isinstance(exc, ValueError):
@@ -132,7 +143,8 @@ def wrap_pipeline_exception(exc: BaseException) -> PipelineError:
         if formatted_openai is not None:
             return AgentExecutionError(_normalize_message(formatted_openai))
         return PipelineError(
-            _normalize_message("An unexpected error occurred during contract analysis.")
+            _normalize_message(
+                "An unexpected error occurred during contract analysis.")
         )
 
     if isinstance(exc, OSError):
@@ -143,7 +155,8 @@ def wrap_pipeline_exception(exc: BaseException) -> PipelineError:
         ):
             return DocumentLoadError(_normalize_message(message))
         return PipelineError(
-            _normalize_message("An unexpected error occurred during contract analysis.")
+            _normalize_message(
+                "An unexpected error occurred during contract analysis.")
         )
 
     formatted_openai = format_openai_related_error(exc)
@@ -152,9 +165,11 @@ def wrap_pipeline_exception(exc: BaseException) -> PipelineError:
 
     if is_openai_related_exception(exc):
         return AgentExecutionError(
-            _normalize_message("OpenAI API error. Check worker logs for details.")
+            _normalize_message(
+                "OpenAI API error. Check worker logs for details.")
         )
 
     return PipelineError(
-        _normalize_message("An unexpected error occurred during contract analysis.")
+        _normalize_message(
+            "An unexpected error occurred during contract analysis.")
     )

@@ -21,6 +21,9 @@ from infra.http_config import load_openai_runtime_config, load_vision_limits
 
 _SUPPORTED_EXTENSIONS = {".jpg", ".jpeg", ".png", ".webp", ".gif"}
 
+# Public alias for callers that need to detect image inputs (e.g. document_parser).
+SUPPORTED_IMAGE_EXTENSIONS = frozenset(_SUPPORTED_EXTENSIONS)
+
 _PIL_FORMAT_TO_MIME = {
     "JPEG": "image/jpeg",
     "PNG": "image/png",

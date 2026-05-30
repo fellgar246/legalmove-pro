@@ -15,6 +15,10 @@ DEFAULT_OPENAI_TIMEOUT = 120.0
 DEFAULT_OPENAI_MAX_RETRIES = 2
 DEFAULT_VISION_MAX_IMAGE_BYTES = 20 * 1024 * 1024
 DEFAULT_VISION_MAX_DIMENSION = 8192
+DEFAULT_PDF_MAX_BYTES = 20 * 1024 * 1024
+# Below this many visible (non-whitespace) characters across the whole PDF we
+# treat the document as scanned/image-only and route to the OCR fallback path.
+DEFAULT_PDF_MIN_TEXT_CHARS = 32
 
 
 def _warn_stderr(msg: str) -> None:
@@ -81,6 +85,19 @@ class VisionLimits:
     max_dimension: int
 
 
+@dataclass(frozen=True)
+class PdfLimits:
+    """Local PDF handling limits.
+
+    ``max_bytes``: reject oversized PDFs before parsing.
+    ``min_text_chars``: minimum visible characters required to treat a PDF as
+    text-based; below this the PDF is considered scanned/image-only.
+    """
+
+    max_bytes: int
+    min_text_chars: int
+
+
 @lru_cache(maxsize=1)
 def load_openai_runtime_config() -> OpenAIRuntimeConfig:
     return OpenAIRuntimeConfig(
@@ -103,5 +120,21 @@ def load_vision_limits() -> VisionLimits:
             os.getenv("VISION_MAX_DIMENSION"),
             "VISION_MAX_DIMENSION",
             DEFAULT_VISION_MAX_DIMENSION,
+        ),
+    )
+
+
+@lru_cache(maxsize=1)
+def load_pdf_limits() -> PdfLimits:
+    return PdfLimits(
+        max_bytes=_parse_positive_int(
+            os.getenv("PDF_MAX_BYTES"),
+            "PDF_MAX_BYTES",
+            DEFAULT_PDF_MAX_BYTES,
+        ),
+        min_text_chars=_parse_positive_int(
+            os.getenv("PDF_MIN_TEXT_CHARS"),
+            "PDF_MIN_TEXT_CHARS",
+            DEFAULT_PDF_MIN_TEXT_CHARS,
         ),
     )

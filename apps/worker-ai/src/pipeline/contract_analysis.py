@@ -21,9 +21,10 @@ from config import (
     langfuse_enabled,
     validate_openai_config,
 )
+from core.document_parser import parse_contract_document_with_metadata
 from core.extraction_models import GranularContractChangeOutput
 from core.granular_validation import normalize_granular_output, validate_granular_output
-from core.image_parser import ImageParseResult, parse_contract_image_with_metadata
+from core.image_parser import ImageParseResult
 from core.models import StructuralContextMap
 from infra.http_config import load_openai_runtime_config
 from infra.langfuse_model import normalize_openai_model_for_langfuse
@@ -111,7 +112,7 @@ def _run_vision_step(
         metadata={"step": "vision_ocr"},
     )
     started = time.perf_counter()
-    parse_result = parse_contract_image_with_metadata(image_path, client=openai_client)
+    parse_result = parse_contract_document_with_metadata(image_path, client=openai_client)
     elapsed_ms = round((time.perf_counter() - started) * 1000)
     safe_generation_end(
         generation,
@@ -362,8 +363,8 @@ def run_contract_analysis(
     Run the full contract-comparison pipeline.
 
     Steps:
-      1. Parse original contract image (GPT-4o Vision)
-      2. Parse amendment image (GPT-4o Vision)
+      1. Parse original contract document (image -> Vision OCR, PDF -> local text)
+      2. Parse amendment document (image -> Vision OCR, PDF -> local text)
       3. ContextualizationAgent → StructuralContextMap
       4. ExtractionAgent → GranularContractChangeOutput
       5. Semantic validation → normalized granular output

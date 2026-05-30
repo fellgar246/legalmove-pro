@@ -33,7 +33,7 @@ def _patch_pipeline_agents(monkeypatch, *, extraction_output):
 
     with patch.object(
         contract_analysis,
-        "parse_contract_image_with_metadata",
+        "parse_contract_document_with_metadata",
         side_effect=[
             ImageParseResult(text="original text", model="gpt-4o", usage={}),
             ImageParseResult(text="amendment text", model="gpt-4o", usage={}),
@@ -134,7 +134,7 @@ def test_semantic_validation_span_non_blocking(tmp_path, monkeypatch):
     ):
         with patch.object(
             contract_analysis,
-            "parse_contract_image_with_metadata",
+            "parse_contract_document_with_metadata",
             side_effect=[
                 ImageParseResult(text="original text", model="gpt-4o", usage={}),
                 ImageParseResult(text="amendment text", model="gpt-4o", usage={}),
