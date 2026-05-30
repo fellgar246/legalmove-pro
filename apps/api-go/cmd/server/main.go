@@ -11,6 +11,7 @@ import (
 	"github.com/felipegarcia/legalmove-pro/apps/api-go/internal/database"
 	"github.com/felipegarcia/legalmove-pro/apps/api-go/internal/documents"
 	"github.com/felipegarcia/legalmove-pro/apps/api-go/internal/httpserver"
+	"github.com/felipegarcia/legalmove-pro/apps/api-go/internal/storage"
 )
 
 func main() {
@@ -30,7 +31,8 @@ func main() {
 	defer pool.Close()
 
 	docRepo := documents.NewRepository(pool)
-	docHandler := documents.NewHandler(docRepo, cfg.UploadsDir)
+	storageSvc := storage.NewLocalStorageService(cfg.UploadsDir)
+	docHandler := documents.NewHandler(docRepo, storageSvc)
 
 	analysisRepo := analyses.NewRepository(pool)
 	analysisHandler := analyses.NewHandler(analysisRepo)

@@ -1,27 +1,31 @@
 package documents
 
 import (
+	"context"
 	"encoding/json"
-	"io"
 	"net/http"
-	"os"
 	"path/filepath"
 	"strings"
 
+	"github.com/felipegarcia/legalmove-pro/apps/api-go/internal/storage"
 	"github.com/google/uuid"
 )
 
 const maxUploadSize = 20 << 20 // 20 MB
 
 type Handler struct {
-	repo       *Repository
-	uploadsDir string
+	repo    documentCreator
+	storage storage.StorageService
 }
 
-func NewHandler(repo *Repository, uploadsDir string) *Handler {
+type documentCreator interface {
+	Create(ctx context.Context, input CreateInput) (Document, error)
+}
+
+func NewHandler(repo documentCreator, storageService storage.StorageService) *Handler {
 	return &Handler{
-		repo:       repo,
-		uploadsDir: uploadsDir,
+		repo:    repo,
+		storage: storageService,
 	}
 }
 
@@ -72,18 +76,13 @@ func (h *Handler) Upload(w http.ResponseWriter, r *http.Request) {
 
 	id := uuid.New()
 	storedName := id.String() + filepath.Ext(originalFilename)
-	storagePath := filepath.Join(h.uploadsDir, storedName)
-
-	dst, err := os.Create(storagePath)
+	savedObject, err := h.storage.Save(r.Context(), storage.SaveObjectInput{
+		Key:              storedName,
+		Body:             file,
+		OriginalFilename: originalFilename,
+		ContentType:      header.Header.Get("Content-Type"),
+	})
 	if err != nil {
-		writeError(w, http.StatusInternalServerError, "failed to save file")
-		return
-	}
-
-	fileSize, err := io.Copy(dst, file)
-	dst.Close()
-	if err != nil {
-		os.Remove(storagePath)
 		writeError(w, http.StatusInternalServerError, "failed to save file")
 		return
 	}
@@ -98,12 +97,12 @@ func (h *Handler) Upload(w http.ResponseWriter, r *http.Request) {
 		Filename:         storedName,
 		OriginalFilename: originalFilename,
 		MimeType:         mimeType,
-		FileSize:         fileSize,
-		StoragePath:      storagePath,
+		FileSize:         savedObject.Size,
+		StoragePath:      savedObject.StoragePath,
 		DocumentRole:     role,
 	})
 	if err != nil {
-		os.Remove(storagePath)
+		_ = h.storage.Delete(r.Context(), storedName)
 		writeError(w, http.StatusInternalServerError, "failed to save document metadata")
 		return
 	}
