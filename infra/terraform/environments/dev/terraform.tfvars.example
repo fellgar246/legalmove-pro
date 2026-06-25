@@ -1,0 +1,21 @@
+# Copy to terraform.tfvars and adjust if needed.
+# cp terraform.tfvars.example terraform.tfvars
+
+aws_region  = "us-east-1"
+project_name = "legalmove-pro"
+environment  = "dev"
+
+# Optional: set an explicit globally unique bucket name.
+# s3_bucket_name = "legalmove-pro-dev-documents"
+
+s3_object_prefix           = "dev"
+s3_enable_versioning       = true
+s3_lifecycle_expire_days   = 90
+
+sqs_visibility_timeout_seconds = 60
+sqs_message_retention_seconds  = 345600
+sqs_receive_wait_time_seconds  = 10
+sqs_max_receive_count          = 5
+
+ecr_image_tag_mutability = "MUTABLE"
+ecr_max_image_count      = 10
