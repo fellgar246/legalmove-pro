@@ -55,6 +55,7 @@ def _parse_bool(raw: str | None, env_name: str, default: bool) -> bool:
 
 
 DATABASE_URL = _env_str("DATABASE_URL")
+QUEUE_PROVIDER = _env_str("QUEUE_PROVIDER", "postgres")
 WORKER_USE_MOCK_RESULT = _parse_bool(
     os.getenv("WORKER_USE_MOCK_RESULT"), "WORKER_USE_MOCK_RESULT", False
 )
@@ -62,6 +63,23 @@ WORKER_POLL_INTERVAL_SECONDS = _parse_int(
     os.getenv("WORKER_POLL_INTERVAL_SECONDS"), "WORKER_POLL_INTERVAL_SECONDS", 5
 )
 UPLOADS_DIR = _env_str("UPLOADS_DIR")
+
+AWS_REGION = _env_str("AWS_REGION")
+S3_BUCKET = _env_str("S3_BUCKET")
+S3_PREFIX = _env_str("S3_PREFIX")
+DOCUMENT_TEMP_DIR = _env_str("DOCUMENT_TEMP_DIR", "./tmp/documents")
+
+SQS_QUEUE_URL = _env_str("SQS_QUEUE_URL")
+SQS_WAIT_TIME_SECONDS = _parse_int(
+    os.getenv("SQS_WAIT_TIME_SECONDS"), "SQS_WAIT_TIME_SECONDS", 10
+)
+SQS_MAX_MESSAGES = _parse_int(os.getenv("SQS_MAX_MESSAGES"), "SQS_MAX_MESSAGES", 1)
+_sqs_visibility_raw = os.getenv("SQS_VISIBILITY_TIMEOUT")
+SQS_VISIBILITY_TIMEOUT = (
+    _parse_int(_sqs_visibility_raw, "SQS_VISIBILITY_TIMEOUT", 60)
+    if _sqs_visibility_raw is not None and _sqs_visibility_raw.strip() != ""
+    else 60
+)
 
 OPENAI_API_KEY = _env_str("OPENAI_API_KEY")
 OPENAI_TIMEOUT = _parse_float(os.getenv("OPENAI_TIMEOUT"), "OPENAI_TIMEOUT", 120.0)
@@ -85,9 +103,17 @@ def langfuse_enabled() -> bool:
 
 
 def validate() -> None:
-    """Worker startup validation — DATABASE_URL only."""
+    """Worker startup validation."""
     if not DATABASE_URL:
         raise ValueError("DATABASE_URL is required")
+    validate_queue_config()
+
+
+def validate_queue_config() -> None:
+    """Validate queue provider configuration."""
+    provider = (QUEUE_PROVIDER or "postgres").strip().lower()
+    if provider == "sqs" and not SQS_QUEUE_URL:
+        raise ValueError("SQS_QUEUE_URL is required when QUEUE_PROVIDER=sqs")
 
 
 def validate_openai_config() -> None:

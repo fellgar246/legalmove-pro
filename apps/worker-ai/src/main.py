@@ -3,8 +3,15 @@ import signal
 import sys
 import time
 
-from config import DATABASE_URL, WORKER_POLL_INTERVAL_SECONDS, langfuse_enabled, validate
+from config import (
+    DATABASE_URL,
+    QUEUE_PROVIDER,
+    WORKER_POLL_INTERVAL_SECONDS,
+    langfuse_enabled,
+    validate,
+)
 from db import get_connection
+from job_queues.factory import create_job_queue
 from worker import run_once
 
 _running = True
@@ -30,14 +37,18 @@ def main() -> None:
         print("[worker] Langfuse disabled (missing LANGFUSE_* env vars)")
 
     conn = get_connection(DATABASE_URL)
+    job_queue = create_job_queue(QUEUE_PROVIDER, conn)
 
     signal.signal(signal.SIGINT, _shutdown)
     signal.signal(signal.SIGTERM, _shutdown)
 
-    print(f"[worker] started, poll interval={WORKER_POLL_INTERVAL_SECONDS}s")
+    print(
+        f"[worker] started, queue_provider={QUEUE_PROVIDER}, "
+        f"poll interval={WORKER_POLL_INTERVAL_SECONDS}s"
+    )
     while _running:
         try:
-            run_once(conn)
+            run_once(job_queue)
         except Exception as e:
             print(f"[worker] unexpected error: {e}")
         time.sleep(WORKER_POLL_INTERVAL_SECONDS)

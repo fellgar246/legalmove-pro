@@ -60,3 +60,17 @@ def test_worker_use_mock_result_parses_true_and_false(monkeypatch):
     monkeypatch.setenv("WORKER_USE_MOCK_RESULT", "no")
     importlib.reload(config_module)
     assert config_module.WORKER_USE_MOCK_RESULT is False
+
+
+def test_queue_provider_defaults_to_postgres(monkeypatch):
+    monkeypatch.delenv("QUEUE_PROVIDER", raising=False)
+    importlib.reload(config_module)
+    assert config_module.QUEUE_PROVIDER == "postgres"
+
+
+def test_validate_queue_config_requires_sqs_queue_url(monkeypatch):
+    monkeypatch.setattr(config_module, "DATABASE_URL", "postgres://example")
+    monkeypatch.setattr(config_module, "QUEUE_PROVIDER", "sqs")
+    monkeypatch.setattr(config_module, "SQS_QUEUE_URL", "")
+    with pytest.raises(ValueError, match="SQS_QUEUE_URL is required"):
+        config_module.validate_queue_config()

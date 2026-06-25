@@ -5,16 +5,40 @@ import psycopg
 from psycopg import Connection
 from psycopg.types.json import Json
 
-from pipeline.path_resolver import resolve_document_path
+from storage.document_materializer import DocumentStorageRef
 
 
 def get_connection(database_url: str) -> Connection:
     return psycopg.connect(database_url, autocommit=False)
 
 
-def get_job_document_paths(conn: Connection, job_id: uuid.UUID) -> tuple[str, str]:
+def _build_document_ref(
+    document_id: uuid.UUID,
+    storage_provider: str | None,
+    storage_path: str,
+    storage_key: str | None,
+    original_filename: str | None,
+    mime_type: str | None,
+) -> DocumentStorageRef:
+    return DocumentStorageRef(
+        document_id=str(document_id),
+        storage_provider=storage_provider or "local",
+        storage_path=storage_path,
+        storage_key=storage_key,
+        original_filename=original_filename,
+        content_type=mime_type,
+    )
+
+
+def get_job_document_refs(
+    conn: Connection, job_id: uuid.UUID
+) -> tuple[DocumentStorageRef, DocumentStorageRef]:
     query = """
-        SELECT d_orig.storage_path, d_amend.storage_path
+        SELECT
+            d_orig.id, d_orig.storage_provider, d_orig.storage_path,
+            d_orig.storage_key, d_orig.original_filename, d_orig.mime_type,
+            d_amend.id, d_amend.storage_provider, d_amend.storage_path,
+            d_amend.storage_key, d_amend.original_filename, d_amend.mime_type
         FROM analysis_jobs j
         JOIN documents d_orig ON d_orig.id = j.original_document_id
         JOIN documents d_amend ON d_amend.id = j.amendment_document_id
@@ -27,11 +51,42 @@ def get_job_document_paths(conn: Connection, job_id: uuid.UUID) -> tuple[str, st
     if row is None:
         raise ValueError(f"Analysis job not found: {job_id}")
 
-    original_storage_path, amendment_storage_path = row
     return (
-        resolve_document_path(original_storage_path),
-        resolve_document_path(amendment_storage_path),
+        _build_document_ref(*row[0:6]),
+        _build_document_ref(*row[6:12]),
     )
+
+
+TERMINAL_JOB_STATUSES = frozenset({"COMPLETED", "FAILED", "VALID_WITH_WARNINGS"})
+
+
+def get_job_status(conn: Connection, job_id: uuid.UUID) -> str | None:
+    query = """
+        SELECT status
+        FROM analysis_jobs
+        WHERE id = %s
+    """
+    with conn.cursor() as cur:
+        cur.execute(query, (job_id,))
+        row = cur.fetchone()
+
+    if row is None:
+        return None
+    return row[0]
+
+
+def claim_analysis_job_by_id(conn: Connection, job_id: uuid.UUID) -> bool:
+    query = """
+        UPDATE analysis_jobs
+        SET status = 'PROCESSING', started_at = NOW(), updated_at = NOW()
+        WHERE id = %s AND status = 'QUEUED'
+        RETURNING id
+    """
+    with conn.cursor() as cur:
+        cur.execute(query, (job_id,))
+        row = cur.fetchone()
+    conn.commit()
+    return row is not None
 
 
 def claim_next_job(conn: Connection) -> uuid.UUID | None:

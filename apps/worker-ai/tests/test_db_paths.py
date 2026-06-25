@@ -15,13 +15,24 @@ def db_conn():
     database_url = "postgres://legalmove:legalmove@localhost:5432/legalmove?sslmode=disable"
     try:
         conn = get_connection(database_url)
+        with conn.cursor() as cur:
+            cur.execute(
+                """
+                SELECT 1
+                FROM information_schema.columns
+                WHERE table_name = 'documents' AND column_name = 'storage_provider'
+                """
+            )
+            if cur.fetchone() is None:
+                conn.close()
+                pytest.skip("Migration 000003 not applied (storage_provider column missing)")
     except Exception as exc:
         pytest.skip(f"PostgreSQL unavailable: {exc}")
     yield conn
     conn.close()
 
 
-def test_get_job_document_paths_resolves_files(db_conn, tmp_path, monkeypatch):
+def test_get_job_document_refs_reads_storage_metadata(db_conn, tmp_path, monkeypatch):
     uploads_dir = tmp_path / "uploads"
     uploads_dir.mkdir()
 
@@ -41,10 +52,10 @@ def test_get_job_document_paths_resolves_files(db_conn, tmp_path, monkeypatch):
             """
             INSERT INTO documents (
                 id, filename, original_filename, mime_type, file_size,
-                storage_path, document_role, status
+                storage_path, storage_provider, storage_key, document_role, status
             ) VALUES
-                (%s, 'orig.png', 'orig.png', 'image/png', 4, %s, 'ORIGINAL', 'UPLOADED'),
-                (%s, 'amend.png', 'amend.png', 'image/png', 5, %s, 'AMENDMENT', 'UPLOADED')
+                (%s, 'orig.png', 'orig.png', 'image/png', 4, %s, 'local', 'orig.png', 'ORIGINAL', 'UPLOADED'),
+                (%s, 'amend.png', 'amend.png', 'image/png', 5, %s, 'local', 'amend.png', 'AMENDMENT', 'UPLOADED')
             """,
             (
                 original_doc_id,
@@ -64,9 +75,18 @@ def test_get_job_document_paths_resolves_files(db_conn, tmp_path, monkeypatch):
     db_conn.commit()
 
     try:
-        original_path, amendment_path = db.get_job_document_paths(db_conn, job_id)
-        assert original_path == str(original_file.resolve())
-        assert amendment_path == str(amendment_file.resolve())
+        original_ref, amendment_ref = db.get_job_document_refs(db_conn, job_id)
+        assert original_ref.document_id == str(original_doc_id)
+        assert original_ref.storage_provider == "local"
+        assert original_ref.storage_path == str(original_file)
+        assert original_ref.storage_key == "orig.png"
+        assert original_ref.original_filename == "orig.png"
+        assert original_ref.content_type == "image/png"
+
+        assert amendment_ref.document_id == str(amendment_doc_id)
+        assert amendment_ref.storage_provider == "local"
+        assert amendment_ref.storage_path == str(amendment_file)
+        assert amendment_ref.storage_key == "amend.png"
     finally:
         with db_conn.cursor() as cur:
             cur.execute("DELETE FROM analysis_jobs WHERE id = %s", (job_id,))
