@@ -16,19 +16,17 @@ const ACCEPTED_MIME_TYPES = [
   'image/jpeg',
   'image/webp',
   'image/gif',
+  'application/pdf',
 ] as const;
 
-const ACCEPT_ATTR = 'image/png,image/jpeg,image/jpg,image/webp,image/gif';
+const ACCEPT_ATTR = 'image/png,image/jpeg,image/jpg,image/webp,image/gif,application/pdf';
 const MAX_FILE_SIZE_BYTES = 20 * 1024 * 1024;
 
 type SlotRole = DocumentRole;
 
 function validateFile(file: File): string | null {
-  if (file.type === 'application/pdf') {
-    return 'PDF files are not supported yet. Please upload an image (PNG, JPG, WEBP or GIF).';
-  }
   if (!ACCEPTED_MIME_TYPES.includes(file.type as (typeof ACCEPTED_MIME_TYPES)[number])) {
-    return `Unsupported file type "${file.type || 'unknown'}". Allowed: PNG, JPG, WEBP, GIF.`;
+    return `Unsupported file type "${file.type || 'unknown'}". Allowed: PDF, PNG, JPG, WEBP, GIF.`;
   }
   if (file.size === 0) return 'The selected file is empty.';
   if (file.size > MAX_FILE_SIZE_BYTES) return 'Files must be smaller than 20MB.';
@@ -90,7 +88,11 @@ const FileSlot: React.FC<FileSlotProps> = ({
 
       {file ? (
         <div className="flex items-center gap-3 rounded-xl border border-emerald-500/20 bg-emerald-500/5 px-4 py-3">
-          <FileImage className="h-5 w-5 flex-shrink-0 text-emerald-400" aria-hidden="true" />
+          {file.type === 'application/pdf' ? (
+            <FileText className="h-5 w-5 flex-shrink-0 text-emerald-400" aria-hidden="true" />
+          ) : (
+            <FileImage className="h-5 w-5 flex-shrink-0 text-emerald-400" aria-hidden="true" />
+          )}
           <div className="min-w-0 flex-1">
             <p className="truncate text-sm font-medium text-slate-200" title={file.name}>
               {file.name}
@@ -119,7 +121,7 @@ const FileSlot: React.FC<FileSlotProps> = ({
           <FileText className="h-5 w-5 flex-shrink-0 text-slate-500" aria-hidden="true" />
           <span id={`${inputId}-hint`} className="text-sm text-slate-400">
             Choose a file{' '}
-            <span className="text-indigo-400">(PNG, JPG, WEBP, GIF)</span>
+            <span className="text-indigo-400">(PDF, PNG, JPG, WEBP, GIF)</span>
           </span>
         </button>
       )}
@@ -229,8 +231,9 @@ export const UploadAnalysisForm: React.FC = () => {
       >
         <ShieldAlert className="mt-0.5 h-4 w-4 flex-shrink-0 text-amber-400" aria-hidden="true" />
         <span>
-          PDF uploads are not supported yet. Upload a clear image scan of each document
-          (PNG, JPG, WEBP or GIF, up to 20MB). {UX_MESSAGES.disclaimer}
+          Upload PDFs with embedded text or clear image scans of each document
+          (PDF, PNG, JPG, WEBP or GIF, up to 20MB). Scanned PDFs without extractable
+          text may fail analysis. {UX_MESSAGES.disclaimer}
         </span>
       </div>
 
