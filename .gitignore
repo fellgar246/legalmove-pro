@@ -122,6 +122,20 @@ uploads/
 docker-compose.override.yml
 docker-compose.*.local.yml
 
+# --- Terraform (infra/terraform) ---------------------------------------------
+.terraform/
+*.tfstate
+*.tfstate.*
+*.tfvars
+!*.tfvars.example
+crash.log
+crash.*.log
+override.tf
+override.tf.json
+*_override.tf
+*_override.tf.json
+.terraform.tfstate.lock.info
+
 # --- Misc build / cache ------------------------------------------------------
 .cache/
 .parcel-cache/
