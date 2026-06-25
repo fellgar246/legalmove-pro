@@ -1,16 +1,21 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	"log"
 	"net/http"
 	"os"
 
+	awsconfig "github.com/aws/aws-sdk-go-v2/config"
+	"github.com/aws/aws-sdk-go-v2/service/s3"
+	"github.com/aws/aws-sdk-go-v2/service/sqs"
 	"github.com/felipegarcia/legalmove-pro/apps/api-go/internal/analyses"
 	"github.com/felipegarcia/legalmove-pro/apps/api-go/internal/config"
 	"github.com/felipegarcia/legalmove-pro/apps/api-go/internal/database"
 	"github.com/felipegarcia/legalmove-pro/apps/api-go/internal/documents"
 	"github.com/felipegarcia/legalmove-pro/apps/api-go/internal/httpserver"
+	"github.com/felipegarcia/legalmove-pro/apps/api-go/internal/queue"
 	"github.com/felipegarcia/legalmove-pro/apps/api-go/internal/storage"
 )
 
@@ -30,15 +35,50 @@ func main() {
 	}
 	defer pool.Close()
 
+	storageCfg := storage.ServiceConfig{
+		Provider:   cfg.StorageProvider,
+		UploadsDir: cfg.UploadsDir,
+		AWSRegion:  cfg.AWSRegion,
+		S3Bucket:   cfg.S3Bucket,
+		S3Prefix:   cfg.S3Prefix,
+	}
+
+	queueCfg := queue.DispatcherConfig{
+		Provider:  cfg.QueueProvider,
+		AWSRegion: cfg.AWSRegion,
+		QueueURL:  cfg.SQSQueueURL,
+	}
+
+	needsAWS := cfg.StorageProvider == storage.StorageProviderS3 || cfg.QueueProvider == queue.QueueProviderSQS
+	if needsAWS {
+		awsCfg, err := awsconfig.LoadDefaultConfig(
+			context.Background(),
+			awsconfig.WithRegion(cfg.AWSRegion),
+		)
+		if err != nil {
+			log.Fatalf("load aws config: %v", err)
+		}
+		if cfg.StorageProvider == storage.StorageProviderS3 {
+			storageCfg.S3Client = storage.NewS3Client(s3.NewFromConfig(awsCfg))
+		}
+		if cfg.QueueProvider == queue.QueueProviderSQS {
+			queueCfg.SQSClient = queue.NewSQSClient(sqs.NewFromConfig(awsCfg))
+		}
+	}
+
 	docRepo := documents.NewRepository(pool)
-	storageSvc, err := storage.NewService(cfg.StorageProvider, cfg.UploadsDir)
+	storageSvc, err := storage.NewService(storageCfg)
 	if err != nil {
 		log.Fatalf("init storage: %v", err)
 	}
 	docHandler := documents.NewHandler(docRepo, storageSvc)
 
 	analysisRepo := analyses.NewRepository(pool)
-	analysisHandler := analyses.NewHandler(analysisRepo)
+	jobDispatcher, err := queue.NewDispatcher(queueCfg)
+	if err != nil {
+		log.Fatalf("init job dispatcher: %v", err)
+	}
+	analysisHandler := analyses.NewHandler(analysisRepo, jobDispatcher)
 
 	router := httpserver.NewRouter(httpserver.Handlers{
 		Documents: docHandler,
@@ -46,12 +86,26 @@ func main() {
 	})
 	addr := fmt.Sprintf(":%d", cfg.APIPort)
 
-	log.Printf(
-		"starting legalmove-api on %s (env=%s, storage=%s)",
-		addr,
-		cfg.AppEnv,
-		cfg.StorageProvider,
-	)
+	if cfg.StorageProvider == storage.StorageProviderS3 {
+		log.Printf(
+			"starting legalmove-api on %s (env=%s, storage=s3, bucket=%s, prefix=%s, region=%s, queue=%s)",
+			addr,
+			cfg.AppEnv,
+			cfg.S3Bucket,
+			cfg.S3Prefix,
+			cfg.AWSRegion,
+			cfg.QueueProvider,
+		)
+	} else {
+		log.Printf(
+			"starting legalmove-api on %s (env=%s, storage=local, uploads=%s, queue=%s)",
+			addr,
+			cfg.AppEnv,
+			cfg.UploadsDir,
+			cfg.QueueProvider,
+		)
+	}
+
 	if err := http.ListenAndServe(addr, router); err != nil {
 		log.Fatalf("server error: %v", err)
 	}

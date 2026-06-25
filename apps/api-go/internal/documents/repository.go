@@ -19,10 +19,11 @@ func (r *Repository) Create(ctx context.Context, input CreateInput) (Document, e
 	const query = `
 		INSERT INTO documents (
 			id, filename, original_filename, mime_type, file_size,
-			storage_path, document_role, status
-		) VALUES ($1, $2, $3, $4, $5, $6, $7, 'UPLOADED')
+			storage_path, storage_provider, storage_key, document_role, status
+		) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, 'UPLOADED')
 		RETURNING id, filename, original_filename, mime_type, file_size,
-		          storage_path, document_role, status, created_at, updated_at`
+		          storage_path, storage_provider, storage_key, document_role, status,
+		          created_at, updated_at`
 
 	var doc Document
 	err := r.pool.QueryRow(ctx, query,
@@ -32,6 +33,8 @@ func (r *Repository) Create(ctx context.Context, input CreateInput) (Document, e
 		input.MimeType,
 		input.FileSize,
 		input.StoragePath,
+		input.StorageProvider,
+		input.StorageKey,
 		string(input.DocumentRole),
 	).Scan(
 		&doc.ID,
@@ -40,6 +43,8 @@ func (r *Repository) Create(ctx context.Context, input CreateInput) (Document, e
 		&doc.MimeType,
 		&doc.FileSize,
 		&doc.StoragePath,
+		&doc.StorageProvider,
+		&doc.StorageKey,
 		&doc.DocumentRole,
 		&doc.Status,
 		&doc.CreatedAt,

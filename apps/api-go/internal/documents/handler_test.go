@@ -5,6 +5,7 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"io"
 	"mime/multipart"
 	"net/http"
 	"net/http/httptest"
@@ -98,6 +99,12 @@ func TestUploadPersistsStoragePathCompatibleWithWorker(t *testing.T) {
 			captured.StoragePath,
 			filepath.Join(uploadsDir, captured.Filename),
 		)
+	}
+	if captured.StorageProvider != string(storage.StorageProviderLocal) {
+		t.Fatalf("StorageProvider = %q, want %q", captured.StorageProvider, storage.StorageProviderLocal)
+	}
+	if captured.StorageKey != captured.Filename {
+		t.Fatalf("StorageKey = %q, want %q", captured.StorageKey, captured.Filename)
 	}
 
 	rawFile, err := os.ReadFile(captured.StoragePath)
@@ -280,5 +287,86 @@ func TestUploadImagePersistsStoragePathCompatibleWithWorker(t *testing.T) {
 	}
 	if string(rawFile) != "png-bytes" {
 		t.Fatalf("stored file content = %q, want %q", string(rawFile), "png-bytes")
+	}
+}
+
+type stubStorage struct {
+	saveFn   func(ctx context.Context, input storage.SaveObjectInput) (*storage.StoredObject, error)
+	deleteFn func(ctx context.Context, key string) error
+}
+
+func (s *stubStorage) Save(ctx context.Context, input storage.SaveObjectInput) (*storage.StoredObject, error) {
+	return s.saveFn(ctx, input)
+}
+
+func (s *stubStorage) Open(ctx context.Context, key string) (io.ReadCloser, error) {
+	return nil, errors.New("not implemented")
+}
+
+func (s *stubStorage) Delete(ctx context.Context, key string) error {
+	if s.deleteFn != nil {
+		return s.deleteFn(ctx, key)
+	}
+	return nil
+}
+
+func TestUploadPersistsS3ProviderAndKey(t *testing.T) {
+	t.Parallel()
+
+	const objectKey = "dev/documents/original/2026/05/uuid-contract.pdf"
+
+	var captured CreateInput
+	storageSvc := &stubStorage{
+		saveFn: func(_ context.Context, input storage.SaveObjectInput) (*storage.StoredObject, error) {
+			if input.DocumentKind != "ORIGINAL" {
+				t.Fatalf("DocumentKind = %q, want ORIGINAL", input.DocumentKind)
+			}
+			return &storage.StoredObject{
+				Provider:     storage.StorageProviderS3,
+				Key:          objectKey,
+				SizeBytes:    int64(len("pdf-content")),
+				OriginalName: input.OriginalName,
+				ContentType:  input.ContentType,
+			}, nil
+		},
+	}
+	repo := &stubRepo{
+		createFn: func(_ context.Context, input CreateInput) (Document, error) {
+			captured = input
+			return Document{
+				ID:               input.ID,
+				Filename:         input.Filename,
+				OriginalFilename: input.OriginalFilename,
+				MimeType:         input.MimeType,
+				FileSize:         input.FileSize,
+				StoragePath:      input.StoragePath,
+				StorageProvider:  input.StorageProvider,
+				StorageKey:       input.StorageKey,
+				DocumentRole:     input.DocumentRole,
+				Status:           "UPLOADED",
+				CreatedAt:        time.Now(),
+			}, nil
+		},
+	}
+	handler := NewHandler(repo, storageSvc)
+
+	req := buildMultipartUploadRequest(t, "ORIGINAL", "contract.pdf", []byte("pdf-content"))
+	rr := httptest.NewRecorder()
+	handler.Upload(rr, req)
+
+	if rr.Code != http.StatusCreated {
+		t.Fatalf("status = %d, want %d, body=%s", rr.Code, http.StatusCreated, rr.Body.String())
+	}
+	if captured.StorageProvider != string(storage.StorageProviderS3) {
+		t.Fatalf("StorageProvider = %q, want %q", captured.StorageProvider, storage.StorageProviderS3)
+	}
+	if captured.StorageKey != objectKey {
+		t.Fatalf("StorageKey = %q, want %q", captured.StorageKey, objectKey)
+	}
+	if captured.StoragePath != objectKey {
+		t.Fatalf("StoragePath = %q, want %q", captured.StoragePath, objectKey)
+	}
+	if captured.Filename != objectKey {
+		t.Fatalf("Filename = %q, want %q", captured.Filename, objectKey)
 	}
 }

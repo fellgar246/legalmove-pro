@@ -1,23 +1,37 @@
 package analyses
 
 import (
+	"context"
 	"encoding/json"
 	"errors"
 	"net/http"
 	"strconv"
 
 	"github.com/felipegarcia/legalmove-pro/apps/api-go/internal/documents"
+	"github.com/felipegarcia/legalmove-pro/apps/api-go/internal/queue"
 	"github.com/go-chi/chi/v5"
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
 )
 
-type Handler struct {
-	repo *Repository
+const enqueueFailureMessage = "failed to enqueue analysis job"
+
+type repository interface {
+	GetDocumentRole(ctx context.Context, id uuid.UUID) (string, error)
+	Create(ctx context.Context, id, originalDocumentID, amendmentDocumentID uuid.UUID) (AnalysisJob, error)
+	MarkFailed(ctx context.Context, id uuid.UUID, errorMessage string) error
+	List(ctx context.Context, limit, offset int) ([]AnalysisJob, error)
+	GetByID(ctx context.Context, id uuid.UUID) (AnalysisJob, error)
+	GetResultByJobID(ctx context.Context, jobID uuid.UUID) (AnalysisResult, error)
 }
 
-func NewHandler(repo *Repository) *Handler {
-	return &Handler{repo: repo}
+type Handler struct {
+	repo       repository
+	dispatcher queue.JobDispatcher
+}
+
+func NewHandler(repo *Repository, dispatcher queue.JobDispatcher) *Handler {
+	return &Handler{repo: repo, dispatcher: dispatcher}
 }
 
 type errorResponse struct {
@@ -81,6 +95,15 @@ func (h *Handler) Create(w http.ResponseWriter, r *http.Request) {
 	job, err := h.repo.Create(r.Context(), uuid.New(), req.OriginalDocumentID, req.AmendmentDocumentID)
 	if err != nil {
 		writeError(w, http.StatusInternalServerError, "failed to create analysis job")
+		return
+	}
+
+	if err := h.dispatcher.DispatchAnalysisJob(r.Context(), job.ID); err != nil {
+		if markErr := h.repo.MarkFailed(r.Context(), job.ID, enqueueFailureMessage); markErr != nil {
+			writeError(w, http.StatusInternalServerError, enqueueFailureMessage)
+			return
+		}
+		writeError(w, http.StatusInternalServerError, enqueueFailureMessage)
 		return
 	}
 

@@ -24,6 +24,8 @@ type Document struct {
 	MimeType         string
 	FileSize         int64
 	StoragePath      string
+	StorageProvider  string
+	StorageKey       string
 	DocumentRole     DocumentRole
 	Status           string
 	CreatedAt        time.Time
@@ -37,6 +39,8 @@ type CreateInput struct {
 	MimeType         string
 	FileSize         int64
 	StoragePath      string
+	StorageProvider  string
+	StorageKey       string
 	DocumentRole     DocumentRole
 }
 

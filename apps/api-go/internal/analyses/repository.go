@@ -92,6 +92,20 @@ func (r *Repository) Create(ctx context.Context, id, originalDocumentID, amendme
 	return job, nil
 }
 
+func (r *Repository) MarkFailed(ctx context.Context, id uuid.UUID, errorMessage string) error {
+	const query = `
+		UPDATE analysis_jobs
+		SET status = 'FAILED', error_message = $2, completed_at = NOW(), updated_at = NOW()
+		WHERE id = $1`
+
+	_, err := r.pool.Exec(ctx, query, id, errorMessage)
+	if err != nil {
+		return fmt.Errorf("mark analysis job failed: %w", err)
+	}
+
+	return nil
+}
+
 func (r *Repository) GetByID(ctx context.Context, id uuid.UUID) (AnalysisJob, error) {
 	query := analysisJobSelect + `
 		WHERE aj.id = $1`

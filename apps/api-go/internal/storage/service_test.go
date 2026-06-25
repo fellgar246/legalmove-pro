@@ -41,7 +41,10 @@ func TestParseStorageProvider(t *testing.T) {
 func TestNewServiceLocal(t *testing.T) {
 	t.Parallel()
 
-	svc, err := NewService(StorageProviderLocal, t.TempDir())
+	svc, err := NewService(ServiceConfig{
+		Provider:   StorageProviderLocal,
+		UploadsDir: t.TempDir(),
+	})
 	if err != nil {
 		t.Fatalf("NewService(local) error = %v", err)
 	}
@@ -50,23 +53,83 @@ func TestNewServiceLocal(t *testing.T) {
 	}
 }
 
-func TestNewServiceS3ReturnsNotImplemented(t *testing.T) {
+func TestNewServiceS3RequiresClientAndConfig(t *testing.T) {
 	t.Parallel()
 
-	_, err := NewService(StorageProviderS3, t.TempDir())
+	_, err := NewService(ServiceConfig{
+		Provider:  StorageProviderS3,
+		AWSRegion: "us-east-1",
+		S3Bucket:  "bucket",
+	})
 	if err == nil {
-		t.Fatal("NewService(s3) expected error")
+		t.Fatal("NewService(s3) without client expected error")
 	}
-	if !strings.Contains(err.Error(), "not implemented") {
-		t.Fatalf("NewService(s3) error = %v, want not implemented message", err)
+	if !strings.Contains(err.Error(), "s3 client is required") {
+		t.Fatalf("error = %v", err)
+	}
+
+	_, err = NewService(ServiceConfig{
+		Provider: StorageProviderS3,
+		S3Client: &mockS3Client{},
+	})
+	if err == nil {
+		t.Fatal("NewService(s3) without region expected error")
+	}
+	if !strings.Contains(err.Error(), "AWS_REGION") {
+		t.Fatalf("error = %v", err)
+	}
+
+	_, err = NewService(ServiceConfig{
+		Provider:  StorageProviderS3,
+		AWSRegion: "us-east-1",
+		S3Client:  &mockS3Client{},
+	})
+	if err == nil {
+		t.Fatal("NewService(s3) without bucket expected error")
+	}
+	if !strings.Contains(err.Error(), "S3_BUCKET") {
+		t.Fatalf("error = %v", err)
+	}
+}
+
+func TestNewServiceS3WithMockClient(t *testing.T) {
+	t.Parallel()
+
+	svc, err := NewService(ServiceConfig{
+		Provider:  StorageProviderS3,
+		AWSRegion: "us-east-1",
+		S3Bucket:  "bucket",
+		S3Prefix:  "dev",
+		S3Client:  &mockS3Client{},
+	})
+	if err != nil {
+		t.Fatalf("NewService(s3) error = %v", err)
+	}
+	if svc == nil {
+		t.Fatal("NewService(s3) returned nil service")
 	}
 }
 
 func TestNewServiceUnsupportedProvider(t *testing.T) {
 	t.Parallel()
 
-	_, err := NewService(StorageProvider("invalid"), t.TempDir())
+	_, err := NewService(ServiceConfig{
+		Provider:   StorageProvider("invalid"),
+		UploadsDir: t.TempDir(),
+	})
 	if err == nil {
 		t.Fatal("NewService(invalid) expected error")
+	}
+}
+
+func TestNewServiceLocalRequiresUploadsDir(t *testing.T) {
+	t.Parallel()
+
+	_, err := NewService(ServiceConfig{Provider: StorageProviderLocal})
+	if err == nil {
+		t.Fatal("expected error for missing uploads dir")
+	}
+	if !strings.Contains(err.Error(), "UPLOADS_DIR") {
+		t.Fatalf("error = %v", err)
 	}
 }

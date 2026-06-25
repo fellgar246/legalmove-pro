@@ -39,6 +39,21 @@ func writeError(w http.ResponseWriter, status int, msg string) {
 	_ = json.NewEncoder(w).Encode(errorResponse{Error: msg})
 }
 
+func persistStorageFields(saved storage.StoredObject) (storagePath, storageProvider, storageKey, filename string) {
+	storageProvider = string(saved.Provider)
+	storageKey = saved.Key
+	filename = saved.Key
+
+	switch saved.Provider {
+	case storage.StorageProviderLocal:
+		storagePath = saved.LocalPath
+	default:
+		storagePath = saved.Key
+	}
+
+	return storagePath, storageProvider, storageKey, filename
+}
+
 func (h *Handler) Upload(w http.ResponseWriter, r *http.Request) {
 	if err := r.ParseMultipartForm(maxUploadSize); err != nil {
 		if err.Error() == "http: request body too large" {
@@ -81,6 +96,8 @@ func (h *Handler) Upload(w http.ResponseWriter, r *http.Request) {
 		Reader:       file,
 		OriginalName: originalFilename,
 		ContentType:  header.Header.Get("Content-Type"),
+		SizeBytes:    header.Size,
+		DocumentKind: string(role),
 	})
 	if err != nil {
 		writeError(w, http.StatusInternalServerError, "failed to save file")
@@ -92,17 +109,25 @@ func (h *Handler) Upload(w http.ResponseWriter, r *http.Request) {
 		mimeType = "application/octet-stream"
 	}
 
+	storagePath, storageProvider, storageKey, filename := persistStorageFields(*savedObject)
+	fileSize := savedObject.SizeBytes
+	if fileSize <= 0 {
+		fileSize = header.Size
+	}
+
 	doc, err := h.repo.Create(r.Context(), CreateInput{
 		ID:               id,
-		Filename:         storedName,
+		Filename:         filename,
 		OriginalFilename: originalFilename,
 		MimeType:         mimeType,
-		FileSize:         savedObject.SizeBytes,
-		StoragePath:      savedObject.LocalPath,
+		FileSize:         fileSize,
+		StoragePath:      storagePath,
+		StorageProvider:  storageProvider,
+		StorageKey:       storageKey,
 		DocumentRole:     role,
 	})
 	if err != nil {
-		_ = h.storage.Delete(r.Context(), storedName)
+		_ = h.storage.Delete(r.Context(), savedObject.Key)
 		writeError(w, http.StatusInternalServerError, "failed to save document metadata")
 		return
 	}
