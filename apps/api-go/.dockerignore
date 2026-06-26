@@ -1,0 +1,11 @@
+.git
+.gitignore
+.env
+.env.*
+uploads/
+*.log
+coverage.*
+Dockerfile
+.dockerignore
+**/*_test.go
+**/testdata/

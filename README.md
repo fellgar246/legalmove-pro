@@ -10,7 +10,7 @@ AI-assisted contract amendment review: compare an original agreement with an ame
 | Python Worker | `apps/worker-ai` | Poll queue, materialize documents, run AI pipeline |
 | Next.js Frontend | `apps/web` | Upload UI, job polling, result view |
 
-PostgreSQL is the **source of truth** for jobs, documents, results, and statuses. S3 and SQS are optional cloud-ready extensions.
+PostgreSQL is the **source of truth** for jobs, documents, results, and statuses. Cloud storage and queues are optional extensions (local defaults below; Azure planned for deployment).
 
 ## Quick start (local)
 
@@ -52,9 +52,9 @@ UPLOADS_DIR=./uploads
 WORKER_USE_MOCK_RESULT=false   # set true to skip OpenAI during worker QA
 ```
 
-## Cloud-ready (S3 + SQS)
+## Cloud-ready (legacy AWS: S3 + SQS)
 
-Requires AWS dev resources (S3 bucket, SQS queue) and matching credentials.
+Requires AWS dev resources and matching credentials. **New deployments target Azure** — see [Milestone 4.A](docs/milestone-4.a-azure-migration.md).
 
 **API:**
 
@@ -92,25 +92,29 @@ cd apps/worker-ai && PYTHONPATH=src .venv/bin/python -m pytest -q
 cd apps/web && npm run lint && npm run build
 ```
 
-## AWS foundation (Terraform)
+## Cloud infrastructure (Terraform)
 
-Shared dev resources (ECR, S3, SQS, IAM policies) are defined under `infra/terraform/`.
+**Active provider: Azure** (Block 4.B foundation ready). AWS work from Blocks 4.1–4.3 is archived under `infra/terraform/aws/`.
 
 ```bash
-cd infra/terraform/environments/dev
-terraform init
-terraform fmt -recursive ../../..
-terraform validate
-terraform plan
+az login
+az account set --subscription "<subscription-id>"
+
+cd infra/terraform/azure/environments/dev
+terraform init && terraform validate && terraform plan
 ```
 
-See [Milestone 4.1 — Terraform AWS foundation](docs/milestone-4.1-terraform-foundation.md) for variables, outputs, and env mapping.
+See [Milestone 4.B — Azure foundation](docs/milestone-4.b-azure-foundation.md) and [Milestone 4.A — migration plan](docs/milestone-4.a-azure-migration.md).
+
+Archived AWS docs: [4.1](docs/milestone-4.1-terraform-foundation.md), [4.2](docs/milestone-4.2-rds-networking.md), [4.3](docs/milestone-4.3-ecs-task-definitions.md).
 
 ## Documentation
 
 - [Milestone 2.3 — PDF native + S3/SQS](docs/milestone-2.3-pdf-native.md) — full architecture and block history
 - [Milestone 3 — Frontend MVP](docs/milestone-3-frontend-mvp.md) — UI flows and local setup
-- [Milestone 4.1 — Terraform AWS foundation](docs/milestone-4.1-terraform-foundation.md) — ECR, S3, SQS, IAM (Block 4.1)
+- [Milestone 4.B — Azure Terraform foundation](docs/milestone-4.b-azure-foundation.md) — ACR, Blob, Service Bus, Key Vault (Block 4.B)
+- [Milestone 4.A — Azure migration plan](docs/milestone-4.a-azure-migration.md) — cloud roadmap
+- [Milestone 4.1–4.3 — AWS Terraform](docs/milestone-4.1-terraform-foundation.md) — archived reference
 
 ## Milestone status
 
@@ -123,7 +127,11 @@ Milestone 2.3 (Blocks 1–8) is **complete** for local and cloud-ready paths:
 - Postgres and SQS job queues
 - PostgreSQL remains source of truth
 
-**In progress:** Milestone 4 — AWS deployment preliminar.
+**In progress:** Milestone 4 — Azure deployment.
 
-- Block 4.1 (Terraform foundation): ECR, S3, SQS, IAM policies — see `infra/terraform/`
-- Next blocks: RDS (4.2), ECS (4.3+), CI/CD, frontend hosting
+- Block 4.A (AWS → Azure reorientation): architecture, archive AWS Terraform, roadmap — **done**
+- Block 4.B (Terraform Azure foundation): RG, ACR, Blob, Service Bus, Key Vault, managed identities — **done**
+- Block 4.C (next): PostgreSQL Flexible Server + Key Vault secret
+- Blocks 4.D–4.H: Container Apps, app adapters, CI/CD
+
+Archived AWS blocks (reference only): 4.1 (ECR/S3/SQS), 4.2 (VPC/RDS), 4.3 (ECS task defs). Dockerfiles remain reusable for Azure Container Apps.
