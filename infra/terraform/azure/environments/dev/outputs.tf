@@ -83,6 +83,16 @@ output "api_identity_client_id" {
   value       = var.create_managed_identities ? module.managed_identities[0].api_identity_client_id : null
 }
 
+output "api_managed_identity_id" {
+  description = "API user-assigned managed identity resource ID."
+  value       = var.create_managed_identities ? module.managed_identities[0].api_identity_id : null
+}
+
+output "api_managed_identity_client_id" {
+  description = "Alias for api_identity_client_id (Block 4.E wiring)."
+  value       = var.create_managed_identities ? module.managed_identities[0].api_identity_client_id : null
+}
+
 output "worker_identity_name" {
   description = "Worker user-assigned managed identity name (null if create_managed_identities=false)."
   value       = var.create_managed_identities ? module.managed_identities[0].worker_identity_name : null
@@ -90,6 +100,16 @@ output "worker_identity_name" {
 
 output "worker_identity_client_id" {
   description = "Worker managed identity client ID for AZURE_CLIENT_ID in Container Apps."
+  value       = var.create_managed_identities ? module.managed_identities[0].worker_identity_client_id : null
+}
+
+output "worker_managed_identity_id" {
+  description = "Worker user-assigned managed identity resource ID."
+  value       = var.create_managed_identities ? module.managed_identities[0].worker_identity_id : null
+}
+
+output "worker_managed_identity_client_id" {
+  description = "Alias for worker_identity_client_id (Block 4.E wiring)."
   value       = var.create_managed_identities ? module.managed_identities[0].worker_identity_client_id : null
 }
 
@@ -144,4 +164,29 @@ output "database_url_secret_id" {
 output "database_url_secret_name" {
   description = "Key Vault secret name for DATABASE-URL."
   value       = module.postgres_flexible.database_url_secret_name
+}
+
+output "log_analytics_workspace_id" {
+  description = "Log Analytics workspace ID (null if create_container_apps_environment=false)."
+  value       = var.create_container_apps_environment ? module.container_apps_environment[0].log_analytics_workspace_id : null
+}
+
+output "log_analytics_workspace_name" {
+  description = "Log Analytics workspace name (null if create_container_apps_environment=false)."
+  value       = var.create_container_apps_environment ? module.container_apps_environment[0].log_analytics_workspace_name : null
+}
+
+output "container_apps_environment_id" {
+  description = "Container Apps Environment resource ID (null if create_container_apps_environment=false)."
+  value       = var.create_container_apps_environment ? module.container_apps_environment[0].container_apps_environment_id : null
+}
+
+output "container_apps_environment_name" {
+  description = "Container Apps Environment name (null if create_container_apps_environment=false)."
+  value       = var.create_container_apps_environment ? module.container_apps_environment[0].container_apps_environment_name : null
+}
+
+output "container_apps_default_domain" {
+  description = "Default domain suffix for future Container Apps ingress (null if create_container_apps_environment=false)."
+  value       = var.create_container_apps_environment ? module.container_apps_environment[0].container_apps_default_domain : null
 }

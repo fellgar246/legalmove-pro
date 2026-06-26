@@ -43,3 +43,12 @@ postgres_database_name         = "legalmove"
 postgres_high_availability_enabled = false
 database_url_secret_name           = "DATABASE-URL"
 # create_postgres_credentials_json_secret = true
+
+# --- Block 4.D: Container Apps Environment ---
+create_container_apps_environment = true
+# log_analytics_workspace_name        = "log-legalmove-pro-dev"
+# container_apps_environment_name     = "cae-legalmove-pro-dev"
+log_analytics_retention_days                  = 30
+container_apps_internal_load_balancer_enabled = false
+container_apps_zone_redundancy_enabled        = false
+container_apps_workload_profile_type          = "Consumption"

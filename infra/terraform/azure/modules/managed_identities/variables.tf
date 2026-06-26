@@ -33,6 +33,12 @@ variable "key_vault_id" {
   description = "Key Vault resource ID."
 }
 
+variable "acr_id" {
+  type        = string
+  description = "ACR resource ID for AcrPull role assignments on API and worker identities."
+  default     = null
+}
+
 variable "tags" {
   type        = map(string)
   description = "Tags applied to managed identities."

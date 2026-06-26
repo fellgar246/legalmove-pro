@@ -219,3 +219,45 @@ variable "create_postgres_credentials_json_secret" {
   description = "Also store DATABASE-CREDENTIALS JSON in Key Vault."
   default     = false
 }
+
+variable "create_container_apps_environment" {
+  type        = bool
+  description = "Create Log Analytics workspace and Container Apps Environment (Block 4.D)."
+  default     = true
+}
+
+variable "log_analytics_workspace_name" {
+  type        = string
+  description = "Optional Log Analytics workspace name override."
+  default     = null
+}
+
+variable "container_apps_environment_name" {
+  type        = string
+  description = "Optional Container Apps Environment name override."
+  default     = null
+}
+
+variable "log_analytics_retention_days" {
+  type        = number
+  description = "Log Analytics workspace retention in days."
+  default     = 30
+}
+
+variable "container_apps_internal_load_balancer_enabled" {
+  type        = bool
+  description = "Use an internal load balancer on the Container Apps Environment."
+  default     = false
+}
+
+variable "container_apps_zone_redundancy_enabled" {
+  type        = bool
+  description = "Enable zone redundancy for the Container Apps Environment."
+  default     = false
+}
+
+variable "container_apps_workload_profile_type" {
+  type        = string
+  description = "Workload profile type for VNet-integrated Container Apps Environment."
+  default     = "Consumption"
+}

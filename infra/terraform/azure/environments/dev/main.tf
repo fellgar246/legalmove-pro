@@ -122,10 +122,12 @@ module "managed_identities" {
   documents_container_scope_id = module.blob_documents.container_resource_manager_id
   servicebus_queue_id          = module.service_bus_analysis.queue_id
   key_vault_id                 = module.key_vault.id
+  acr_id                       = module.acr.id
 
   tags = local.common_tags
 
   depends_on = [
+    module.acr,
     module.blob_documents,
     module.service_bus_analysis,
     module.key_vault,
@@ -172,4 +174,26 @@ module "postgres_flexible" {
   tags = local.common_tags
 
   depends_on = [module.networking, module.key_vault]
+}
+
+module "container_apps_environment" {
+  source = "../../modules/container_apps_environment"
+  count  = var.create_container_apps_environment ? 1 : 0
+
+  project_name             = var.project_name
+  environment              = var.environment
+  resource_group_name      = module.resource_group.name
+  location                 = module.resource_group.location
+  container_apps_subnet_id = module.networking.container_apps_subnet_id
+
+  log_analytics_workspace_name                  = var.log_analytics_workspace_name
+  container_apps_environment_name               = var.container_apps_environment_name
+  log_analytics_retention_days                  = var.log_analytics_retention_days
+  container_apps_internal_load_balancer_enabled = var.container_apps_internal_load_balancer_enabled
+  container_apps_zone_redundancy_enabled        = var.container_apps_zone_redundancy_enabled
+  container_apps_workload_profile_type          = var.container_apps_workload_profile_type
+
+  tags = local.common_tags
+
+  depends_on = [module.networking]
 }

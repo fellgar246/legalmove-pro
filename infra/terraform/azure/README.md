@@ -1,6 +1,6 @@
 # Terraform — Azure (active)
 
-> **Status: Block 4.C complete.** Shared Azure foundation + private PostgreSQL for dev/staging. Container Apps come in Blocks 4.D–4.E.
+> **Status: Block 4.D complete.** Shared Azure foundation, private PostgreSQL, and Container Apps Environment for dev/staging. Container Apps (API/Worker) come in Block 4.E.
 
 ## Layout
 
@@ -13,8 +13,9 @@ infra/terraform/azure/
 │   ├── service_bus_analysis/
 │   ├── key_vault/
 │   ├── managed_identities/
-│   ├── networking/           # Block 4.C
-│   └── postgres_flexible/    # Block 4.C
+│   ├── networking/                  # Block 4.C (+ subnet delegation in 4.D)
+│   ├── postgres_flexible/           # Block 4.C
+│   └── container_apps_environment/  # Block 4.D
 └── environments/
     └── dev/
         ├── main.tf
@@ -37,7 +38,15 @@ infra/terraform/azure/
 - Database `legalmove`
 - Key Vault secret `DATABASE-URL` (password in state/KV only — not output)
 
-**Not yet:** Container Apps Environment, migration runner, app adapters, bastion/VPN.
+## Block 4.D scope
+
+- Log Analytics workspace (30-day retention default)
+- Container Apps Environment (`cae-legalmove-pro-dev`) on `snet-container-apps`
+- Consumption workload profile for VNet integration
+- `AcrPull` on ACR for API and worker managed identities
+- Subnet delegation `Microsoft.App/environments` on existing Container Apps subnet
+
+**Not yet:** Container Apps (API/Worker), migration runner, app adapters, bastion/VPN.
 
 ## Prerequisites
 
@@ -59,6 +68,14 @@ terraform fmt -recursive ../..
 terraform validate
 terraform plan
 # terraform apply
+```
+
+## Validate Container Apps Environment (after apply)
+
+```bash
+az containerapp env show \
+  --name $(terraform output -raw container_apps_environment_name) \
+  --resource-group $(terraform output -raw resource_group_name)
 ```
 
 ## Read DATABASE-URL
@@ -90,7 +107,7 @@ cd infra/terraform/azure/environments/dev
 terraform destroy
 ```
 
-PostgreSQL Flexible Server may take several minutes to delete. Key Vault soft-deleted vaults may require manual purge.
+PostgreSQL Flexible Server and Container Apps Environment may take several minutes to delete. Key Vault soft-deleted vaults may require manual purge.
 
 ## Push images to ACR (after Block 4.B apply)
 
@@ -118,10 +135,11 @@ docker push "$ACR/worker-ai:latest"
 | `AZURE_SERVICE_BUS_NAMESPACE` | `terraform output servicebus_namespace_name` |
 | `AZURE_SERVICE_BUS_QUEUE_NAME` | `terraform output servicebus_queue_name` |
 | `AZURE_KEY_VAULT_NAME` | `terraform output key_vault_name` |
-| `AZURE_CLIENT_ID` | API/worker identity client ID outputs |
+| `AZURE_CLIENT_ID` | `terraform output api_managed_identity_client_id` / worker |
 
 ## Documentation
 
+- [Milestone 4.D — Container Apps Environment](../../docs/milestone-4.d-container-apps-environment.md)
 - [Milestone 4.C — PostgreSQL + networking](../../docs/milestone-4.c-azure-postgres-networking.md)
 - [Milestone 4.B — Azure Terraform foundation](../../docs/milestone-4.b-azure-foundation.md)
 - [Milestone 4.A — Azure migration plan](../../docs/milestone-4.a-azure-migration.md)

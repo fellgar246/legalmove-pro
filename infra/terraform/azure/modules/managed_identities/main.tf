@@ -52,3 +52,19 @@ resource "azurerm_role_assignment" "worker_keyvault_secrets_user" {
   role_definition_name = "Key Vault Secrets User"
   principal_id         = azurerm_user_assigned_identity.worker.principal_id
 }
+
+resource "azurerm_role_assignment" "api_acr_pull" {
+  count = var.acr_id != null ? 1 : 0
+
+  scope                = var.acr_id
+  role_definition_name = "AcrPull"
+  principal_id         = azurerm_user_assigned_identity.api.principal_id
+}
+
+resource "azurerm_role_assignment" "worker_acr_pull" {
+  count = var.acr_id != null ? 1 : 0
+
+  scope                = var.acr_id
+  role_definition_name = "AcrPull"
+  principal_id         = azurerm_user_assigned_identity.worker.principal_id
+}
