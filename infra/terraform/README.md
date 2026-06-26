@@ -45,6 +45,6 @@ UPLOADS_DIR=./uploads
 
 | Doc | Status |
 |-----|--------|
-| [Milestone 4.B — Azure foundation](../../docs/milestone-4.b-azure-foundation.md) | **Active — Block 4.B** |
+| [Milestone 4.C — PostgreSQL + networking](../../docs/milestone-4.c-azure-postgres-networking.md) | **Active — Block 4.C** |
 | [Milestone 4.A — Azure migration](../../docs/milestone-4.a-azure-migration.md) | Roadmap |
 | [Milestone 4.1–4.3 — AWS blocks](../../docs/milestone-4.1-terraform-foundation.md) | Archived reference |

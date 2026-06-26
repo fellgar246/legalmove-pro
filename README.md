@@ -112,6 +112,7 @@ Archived AWS docs: [4.1](docs/milestone-4.1-terraform-foundation.md), [4.2](docs
 
 - [Milestone 2.3 — PDF native + S3/SQS](docs/milestone-2.3-pdf-native.md) — full architecture and block history
 - [Milestone 3 — Frontend MVP](docs/milestone-3-frontend-mvp.md) — UI flows and local setup
+- [Milestone 4.C — Azure PostgreSQL + networking](docs/milestone-4.c-azure-postgres-networking.md) — VNet, private PostgreSQL, DATABASE-URL (Block 4.C)
 - [Milestone 4.B — Azure Terraform foundation](docs/milestone-4.b-azure-foundation.md) — ACR, Blob, Service Bus, Key Vault (Block 4.B)
 - [Milestone 4.A — Azure migration plan](docs/milestone-4.a-azure-migration.md) — cloud roadmap
 - [Milestone 4.1–4.3 — AWS Terraform](docs/milestone-4.1-terraform-foundation.md) — archived reference
@@ -131,7 +132,8 @@ Milestone 2.3 (Blocks 1–8) is **complete** for local and cloud-ready paths:
 
 - Block 4.A (AWS → Azure reorientation): architecture, archive AWS Terraform, roadmap — **done**
 - Block 4.B (Terraform Azure foundation): RG, ACR, Blob, Service Bus, Key Vault, managed identities — **done**
-- Block 4.C (next): PostgreSQL Flexible Server + Key Vault secret
-- Blocks 4.D–4.H: Container Apps, app adapters, CI/CD
+- Block 4.C (PostgreSQL + networking): VNet, private PostgreSQL, `DATABASE-URL` in Key Vault — **done**
+- Block 4.D (next): Container Apps Environment + VNet integration
+- Blocks 4.E–4.H: Container Apps services, app adapters, CI/CD
 
 Archived AWS blocks (reference only): 4.1 (ECR/S3/SQS), 4.2 (VPC/RDS), 4.3 (ECS task defs). Dockerfiles remain reusable for Azure Container Apps.

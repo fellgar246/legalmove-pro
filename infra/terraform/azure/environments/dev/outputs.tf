@@ -100,3 +100,48 @@ output "expected_acr_image_tags" {
     worker_ai = "${module.acr.login_server}/worker-ai:latest"
   }
 }
+
+output "vnet_id" {
+  description = "LegalMove Pro virtual network ID."
+  value       = module.networking.vnet_id
+}
+
+output "postgres_subnet_id" {
+  description = "Delegated subnet ID for PostgreSQL Flexible Server."
+  value       = module.networking.postgres_subnet_id
+}
+
+output "container_apps_subnet_id" {
+  description = "Subnet ID reserved for future Container Apps Environment."
+  value       = module.networking.container_apps_subnet_id
+}
+
+output "postgres_private_dns_zone_id" {
+  description = "Private DNS zone ID for PostgreSQL private link."
+  value       = module.networking.private_dns_zone_id
+}
+
+output "postgres_server_name" {
+  description = "PostgreSQL Flexible Server name."
+  value       = module.postgres_flexible.server_name
+}
+
+output "postgres_server_fqdn" {
+  description = "Private FQDN for PostgreSQL (VNet/private DNS only)."
+  value       = module.postgres_flexible.server_fqdn
+}
+
+output "postgres_database_name" {
+  description = "Application database name."
+  value       = module.postgres_flexible.database_name
+}
+
+output "database_url_secret_id" {
+  description = "Key Vault secret resource ID for DATABASE-URL."
+  value       = module.postgres_flexible.database_url_secret_id
+}
+
+output "database_url_secret_name" {
+  description = "Key Vault secret name for DATABASE-URL."
+  value       = module.postgres_flexible.database_url_secret_name
+}

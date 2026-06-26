@@ -129,3 +129,93 @@ variable "create_managed_identities" {
   description = "Create user-assigned managed identities and RBAC for future Container Apps."
   default     = true
 }
+
+variable "vnet_cidr" {
+  type        = string
+  description = "Address space for the LegalMove Pro VNet."
+  default     = "10.30.0.0/16"
+}
+
+variable "postgres_subnet_cidr" {
+  type        = string
+  description = "Delegated subnet for PostgreSQL Flexible Server."
+  default     = "10.30.11.0/24"
+}
+
+variable "container_apps_subnet_cidr" {
+  type        = string
+  description = "Subnet reserved for future Container Apps Environment (/23 recommended)."
+  default     = "10.30.21.0/23"
+}
+
+variable "postgres_server_name" {
+  type        = string
+  description = "Optional PostgreSQL Flexible Server name override (3-63 chars, globally unique)."
+  default     = null
+}
+
+variable "postgres_version" {
+  type        = string
+  description = "PostgreSQL major version."
+  default     = "16"
+}
+
+variable "postgres_sku_name" {
+  type        = string
+  description = "Flexible Server SKU."
+  default     = "B_Standard_B1ms"
+}
+
+variable "postgres_storage_mb" {
+  type        = number
+  description = "Allocated storage in megabytes."
+  default     = 32768
+}
+
+variable "postgres_backup_retention_days" {
+  type        = number
+  description = "Backup retention in days."
+  default     = 7
+}
+
+variable "postgres_admin_username" {
+  type        = string
+  description = "PostgreSQL administrator login."
+  default     = "legalmove"
+}
+
+variable "postgres_database_name" {
+  type        = string
+  description = "Application database name."
+  default     = "legalmove"
+}
+
+variable "postgres_zone" {
+  type        = string
+  description = "Optional availability zone for PostgreSQL (1, 2, or 3)."
+  default     = null
+}
+
+variable "postgres_high_availability_enabled" {
+  type        = bool
+  description = "Enable zone-redundant high availability."
+  default     = false
+}
+
+variable "postgres_password_length" {
+  type        = number
+  description = "Length of the generated administrator password."
+  default     = 32
+}
+
+variable "database_url_secret_name" {
+  type        = string
+  description = "Key Vault secret name for DATABASE_URL."
+  default     = "DATABASE-URL"
+}
+
+variable "create_postgres_credentials_json_secret" {
+  type        = bool
+  description = "Also store DATABASE-CREDENTIALS JSON in Key Vault."
+  default     = false
+}

@@ -43,6 +43,12 @@ locals {
     var.servicebus_namespace_name,
     substr("sb-lmpro-${var.environment}-${local.name_suffix}", 0, 50),
   )
+
+  # PostgreSQL Flexible Server: 3-63 chars, globally unique.
+  postgres_server_name = coalesce(
+    var.postgres_server_name,
+    substr("psql-lmpro-${var.environment}-${local.name_suffix}", 0, 63),
+  )
 }
 
 module "resource_group" {
@@ -124,4 +130,46 @@ module "managed_identities" {
     module.service_bus_analysis,
     module.key_vault,
   ]
+}
+
+module "networking" {
+  source = "../../modules/networking"
+
+  project_name               = var.project_name
+  environment                = var.environment
+  resource_group_name        = module.resource_group.name
+  location                   = module.resource_group.location
+  vnet_cidr                  = var.vnet_cidr
+  postgres_subnet_cidr       = var.postgres_subnet_cidr
+  container_apps_subnet_cidr = var.container_apps_subnet_cidr
+  tags                       = local.common_tags
+}
+
+module "postgres_flexible" {
+  source = "../../modules/postgres_flexible"
+
+  project_name        = var.project_name
+  environment         = var.environment
+  server_name         = local.postgres_server_name
+  resource_group_name = module.resource_group.name
+  location            = module.resource_group.location
+  postgres_subnet_id  = module.networking.postgres_subnet_id
+  private_dns_zone_id = module.networking.private_dns_zone_id
+  key_vault_id        = module.key_vault.id
+
+  postgres_version               = var.postgres_version
+  sku_name                       = var.postgres_sku_name
+  storage_mb                     = var.postgres_storage_mb
+  backup_retention_days          = var.postgres_backup_retention_days
+  admin_username                 = var.postgres_admin_username
+  database_name                  = var.postgres_database_name
+  availability_zone              = var.postgres_zone
+  high_availability_enabled      = var.postgres_high_availability_enabled
+  password_length                = var.postgres_password_length
+  database_url_secret_name       = var.database_url_secret_name
+  create_credentials_json_secret = var.create_postgres_credentials_json_secret
+
+  tags = local.common_tags
+
+  depends_on = [module.networking, module.key_vault]
 }

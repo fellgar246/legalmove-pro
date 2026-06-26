@@ -27,3 +27,19 @@ key_vault_soft_delete_retention_days  = 7
 key_vault_purge_protection_enabled    = false
 
 create_managed_identities = true
+
+# --- Block 4.C: VNet + PostgreSQL Flexible Server (private) ---
+vnet_cidr                  = "10.30.0.0/16"
+postgres_subnet_cidr       = "10.30.11.0/24"
+container_apps_subnet_cidr = "10.30.21.0/23"
+
+postgres_version               = "16"
+postgres_sku_name              = "B_Standard_B1ms"
+postgres_storage_mb            = 32768
+postgres_backup_retention_days = 7
+postgres_admin_username        = "legalmove"
+postgres_database_name         = "legalmove"
+# postgres_zone                  = "1"
+postgres_high_availability_enabled = false
+database_url_secret_name           = "DATABASE-URL"
+# create_postgres_credentials_json_secret = true
