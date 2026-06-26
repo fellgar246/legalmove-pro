@@ -19,3 +19,38 @@ sqs_max_receive_count          = 5
 
 ecr_image_tag_mutability = "MUTABLE"
 ecr_max_image_count      = 10
+
+# --- Networking (Block 4.2) ---
+vpc_cidr             = "10.20.0.0/16"
+public_subnet_cidrs  = ["10.20.1.0/24", "10.20.2.0/24"]
+private_subnet_cidrs = ["10.20.11.0/24", "10.20.12.0/24"]
+
+# NAT adds ~$32/month + traffic. Keep false for low-cost dev.
+# ECS in private subnets will need NAT or VPC endpoints (Block 4.3+).
+enable_nat_gateway = false
+
+# --- RDS PostgreSQL (Block 4.2) ---
+db_name                    = "legalmove"
+db_username                = "legalmove"
+db_instance_class          = "db.t4g.micro"
+db_allocated_storage       = 20
+db_engine_version          = "16.6"
+db_backup_retention_period = 7
+db_deletion_protection     = false
+db_skip_final_snapshot     = true
+
+# --- ECS task definitions (Block 4.3) ---
+ecs_image_tag        = "latest"
+ecs_api_cpu          = 256
+ecs_api_memory       = 512
+ecs_worker_cpu       = 512
+ecs_worker_memory    = 1024
+api_container_port   = 8080
+worker_use_mock_result = false
+document_temp_dir    = "/tmp/legalmove-documents"
+pdf_max_bytes        = 20971520
+pdf_min_text_chars   = 32
+
+# Optional: Secrets Manager ARN with plain-text OpenAI API key.
+# Create manually: aws secretsmanager create-secret --name legalmove-pro/dev/openai-api-key --secret-string "sk-..."
+# openai_api_key_secret_arn = "arn:aws:secretsmanager:us-east-1:ACCOUNT:secret:legalmove-pro/dev/openai-api-key-XXXX"

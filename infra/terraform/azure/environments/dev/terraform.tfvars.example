@@ -1,0 +1,29 @@
+# Copy to terraform.tfvars and adjust as needed.
+# cp terraform.tfvars.example terraform.tfvars
+
+location     = "eastus"
+project_name = "legalmove-pro"
+environment  = "dev"
+
+# resource_group_name = "rg-legalmove-pro-dev"
+
+acr_sku = "Basic"
+# acr_name = "lmprodevacr0001"
+
+# storage_account_name = "lmprodev0001"
+storage_container_name            = "documents"
+storage_replication_type          = "LRS"
+storage_blob_soft_delete_retention_days = 7
+storage_lifecycle_expire_days     = 90
+
+servicebus_sku                    = "Standard"
+servicebus_queue_name             = "analysis-jobs"
+servicebus_max_delivery_count     = 5
+servicebus_lock_duration          = "PT1M"
+servicebus_message_ttl            = "P4D"
+
+key_vault_sku_name                    = "standard"
+key_vault_soft_delete_retention_days  = 7
+key_vault_purge_protection_enabled    = false
+
+create_managed_identities = true

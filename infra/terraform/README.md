@@ -1,77 +1,50 @@
 # Terraform — LegalMove Pro
 
-Infrastructure as code for AWS deployment. Milestone 4 is delivered in small, verifiable blocks.
+Infrastructure as code for cloud deployment. **Azure is the active cloud provider** (Milestone 4, from Block 4.A onward).
 
 ## Layout
 
 ```text
 infra/terraform/
-├── modules/
-│   ├── ecr/                   # Container registries (api-go, worker-ai)
-│   ├── s3_documents/          # Private documents bucket
-│   ├── sqs_analysis/            # Analysis jobs queue + DLQ
-│   └── iam_service_policies/  # Standalone IAM policies for future ECS roles
-└── environments/
-    └── dev/                   # Preliminary dev/staging foundation
+├── aws/     # Archived AWS work (Blocks 4.1–4.3) — deprecated, reference only
+└── azure/   # Active Azure infrastructure (starting Block 4.B)
 ```
 
-## Block 4.1 scope
+## Active path: Azure
 
-Creates shared AWS foundation resources only:
-
-- ECR repositories for API and worker
-- Private S3 bucket for documents
-- SQS main queue + DLQ with redrive policy
-- Minimal IAM policies (not yet attached to ECS task roles)
-
-Does **not** create ECS, RDS, ALB, CloudFront, CI/CD, or frontend hosting.
-
-## Prerequisites
-
-- Terraform `>= 1.5`
-- AWS CLI configured (`aws configure` or ambient credentials)
-- IAM permissions to manage ECR, S3, SQS, and IAM policies in the target account/region
-
-## Commands (dev environment)
+See [infra/terraform/azure/README.md](./azure/README.md), [Milestone 4.B — Azure foundation](../../docs/milestone-4.b-azure-foundation.md), and [Milestone 4.A — migration plan](../../docs/milestone-4.a-azure-migration.md).
 
 ```bash
-cd infra/terraform/environments/dev
+az login
+az account set --subscription "<subscription-id>"
 
+cd infra/terraform/azure/environments/dev
 terraform init
-terraform fmt -recursive ../../..
+terraform fmt -recursive ../..
 terraform validate
 terraform plan
-# terraform apply   # when ready to provision real AWS resources
 ```
 
-After apply:
+## Archived path: AWS
 
-```bash
-terraform output
-```
+The AWS foundation (ECR, S3, SQS, VPC, RDS, ECS task definitions) lives under `infra/terraform/aws/`. It is **not deleted** but **not the deployment target**.
 
-## Mapping outputs to application env
+See [infra/terraform/aws/README.md](./aws/README.md) for historical operator notes.
 
-| Terraform output | API env | Worker env |
-|------------------|---------|------------|
-| `aws_region` | `AWS_REGION` | `AWS_REGION` |
-| `documents_bucket_name` | `S3_BUCKET` | `S3_BUCKET` |
-| `s3_object_prefix` | `S3_PREFIX` | `S3_PREFIX` |
-| `analysis_queue_url` | `SQS_QUEUE_URL` | `SQS_QUEUE_URL` |
+## Local development
 
-Cloud runtime (future ECS block):
+Local mode does **not** use Terraform. Defaults remain:
 
 ```env
-STORAGE_PROVIDER=s3
-QUEUE_PROVIDER=sqs
+STORAGE_PROVIDER=local
+QUEUE_PROVIDER=postgres
+UPLOADS_DIR=./uploads
 ```
-
-Local development remains unchanged with `STORAGE_PROVIDER=local` and `QUEUE_PROVIDER=postgres`.
 
 ## Documentation
 
-- [Milestone 4.1 — Terraform AWS foundation](../../docs/milestone-4.1-terraform-foundation.md)
-
-## State
-
-Dev uses local state (`terraform.tfstate` in the environment directory). Do not commit state files. Remote state can be introduced in a later block before shared staging/prod.
+| Doc | Status |
+|-----|--------|
+| [Milestone 4.B — Azure foundation](../../docs/milestone-4.b-azure-foundation.md) | **Active — Block 4.B** |
+| [Milestone 4.A — Azure migration](../../docs/milestone-4.a-azure-migration.md) | Roadmap |
+| [Milestone 4.1–4.3 — AWS blocks](../../docs/milestone-4.1-terraform-foundation.md) | Archived reference |
