@@ -51,6 +51,7 @@ locals {
   )
 
   deploy_container_apps = var.create_container_apps && var.create_container_apps_environment && var.create_managed_identities
+  deploy_migration_job  = local.deploy_container_apps && var.create_migration_job
 }
 
 module "resource_group" {
@@ -252,6 +253,15 @@ module "container_apps" {
   worker_poll_interval_seconds        = var.worker_poll_interval_seconds
   azure_service_bus_wait_time_seconds = var.azure_service_bus_wait_time_seconds
   workload_profile_name               = var.container_apps_workload_profile_type
+
+  create_migration_job                 = var.create_migration_job
+  migration_job_name                   = var.migration_job_name
+  migration_image_name                 = var.migration_image_name
+  migration_image_tag                  = var.migration_image_tag
+  migration_replica_timeout_in_seconds = var.migration_replica_timeout_in_seconds
+  migration_cpu                        = var.migration_cpu
+  migration_memory                     = var.migration_memory
+  migration_direction                  = var.migration_direction
 
   tags = local.common_tags
 

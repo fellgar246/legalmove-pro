@@ -42,3 +42,18 @@ output "worker_image" {
   description = "Full ACR image reference used by the worker Container App."
   value       = local.worker_image
 }
+
+output "migration_job_name" {
+  description = "Migration Container Apps Job name (null if create_migration_job=false)."
+  value       = var.create_migration_job ? azurerm_container_app_job.migration[0].name : null
+}
+
+output "migration_job_id" {
+  description = "Migration Container Apps Job resource ID (null if create_migration_job=false)."
+  value       = var.create_migration_job ? azurerm_container_app_job.migration[0].id : null
+}
+
+output "migration_image" {
+  description = "Full ACR image reference used by the migration job."
+  value       = local.migration_image
+}

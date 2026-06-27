@@ -1,0 +1,17 @@
+# syntax=docker/dockerfile:1
+# Lightweight migration runner for private Azure PostgreSQL (Block 4.G).
+# Build from apps/api-go: docker build -f Dockerfile.migrations .
+
+FROM postgres:16-alpine
+
+RUN apk add --no-cache bash
+
+WORKDIR /migrations
+
+COPY migrations/*.up.sql /migrations/
+COPY migrations/*.down.sql /migrations/
+COPY scripts/run-migrations.sh /usr/local/bin/run-migrations.sh
+
+RUN chmod +x /usr/local/bin/run-migrations.sh
+
+ENTRYPOINT ["/usr/local/bin/run-migrations.sh"]

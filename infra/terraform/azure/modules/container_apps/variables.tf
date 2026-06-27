@@ -221,3 +221,56 @@ variable "tags" {
   description = "Tags applied to Container Apps."
   default     = {}
 }
+
+variable "create_migration_job" {
+  type        = bool
+  description = "Deploy a manual Container Apps Job to apply SQL migrations (Block 4.G)."
+  default     = true
+}
+
+variable "migration_job_name" {
+  type        = string
+  description = "Optional migration Container Apps Job name override."
+  default     = null
+}
+
+variable "migration_image_name" {
+  type        = string
+  description = "Migration runner image repository name in ACR."
+  default     = "legalmove-migrations"
+}
+
+variable "migration_image_tag" {
+  type        = string
+  description = "Migration runner image tag in ACR."
+  default     = "latest"
+}
+
+variable "migration_replica_timeout_in_seconds" {
+  type        = number
+  description = "Timeout for a single migration job execution."
+  default     = 300
+}
+
+variable "migration_cpu" {
+  type        = number
+  description = "Migration job container vCPU allocation."
+  default     = 0.25
+}
+
+variable "migration_memory" {
+  type        = string
+  description = "Migration job container memory allocation."
+  default     = "0.5Gi"
+}
+
+variable "migration_direction" {
+  type        = string
+  description = "Default MIGRATION_DIRECTION env for the job container (up or down)."
+  default     = "up"
+
+  validation {
+    condition     = contains(["up", "down"], var.migration_direction)
+    error_message = "migration_direction must be up or down."
+  }
+}

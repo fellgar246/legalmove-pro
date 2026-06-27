@@ -14,6 +14,12 @@ locals {
   api_image    = "${var.acr_login_server}/${var.api_image_name}:${var.container_image_tag}"
   worker_image = "${var.acr_login_server}/${var.worker_image_name}:${var.container_image_tag}"
 
+  migration_job_name = coalesce(
+    var.migration_job_name,
+    "caj-migrate-${local.name_prefix}",
+  )
+  migration_image = "${var.acr_login_server}/${var.migration_image_name}:${var.migration_image_tag}"
+
   database_url_secret_ref_name   = "database-url"
   openai_api_key_secret_ref_name = "openai-api-key"
 

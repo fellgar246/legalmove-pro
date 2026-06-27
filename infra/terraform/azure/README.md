@@ -1,6 +1,6 @@
 # Terraform — Azure (active)
 
-> **Status: Block 4.F complete.** Shared Azure foundation, private PostgreSQL, Container Apps Environment, and API/Worker Container Apps for dev/staging. Migration runner comes in Block 4.G.
+> **Status: Block 4.G complete.** Shared Azure foundation, private PostgreSQL, Container Apps Environment, API/Worker Container Apps, and a manual migration job for dev/staging.
 
 ## Layout
 
@@ -16,7 +16,7 @@ infra/terraform/azure/
 │   ├── networking/                  # Block 4.C (+ subnet delegation in 4.D)
 │   ├── postgres_flexible/           # Block 4.C
 │   ├── container_apps_environment/  # Block 4.D
-│   └── container_apps/              # Block 4.F
+│   └── container_apps/              # Block 4.F + migration job (4.G)
 └── environments/
     └── dev/
         ├── main.tf
@@ -54,14 +54,22 @@ infra/terraform/azure/
 - Key Vault secret refs for `DATABASE_URL` (+ optional `OPENAI_API_KEY`)
 - Cloud env vars for `azure_blob` / `azure_service_bus`
 
-**Not yet:** Migration runner, frontend hosting, KEDA scaling, custom domain.
+## Block 4.G scope
+
+- Container Apps Job (`caj-migrate-legalmove-pro-dev`) — manual trigger, no schedule
+- ACR image `legalmove-migrations:latest` (`psql` + SQL files)
+- Key Vault secret ref `DATABASE-URL` via API managed identity
+- Applies migrations `000001`–`000004` with `schema_migrations` ledger
+
+**Not yet:** Frontend hosting, full CI/CD, KEDA scaling, custom domain.
 
 ## Prerequisites
 
 - Terraform `>= 1.5`, Docker, Azure CLI
 - `az login` and subscription selected
 - IAM: Contributor + `User Access Administrator` for RBAC
-- **Before first Block 4.F apply:** push `api-go:latest` and `worker-ai:latest` to ACR
+- **Before Block 4.F apply:** push `api-go:latest` and `worker-ai:latest` to ACR
+- **Before Block 4.G apply:** push `legalmove-migrations:latest` to ACR
 
 ## Commands (dev)
 
@@ -79,7 +87,7 @@ terraform plan
 # terraform apply
 ```
 
-## Push images (required before Block 4.F apply)
+## Push images (required before Container Apps apply)
 
 ```bash
 cd infra/terraform/azure/environments/dev
@@ -94,12 +102,35 @@ docker push "$ACR_LOGIN_SERVER/api-go:latest"
 docker build --platform linux/amd64 -f ../../../../apps/worker-ai/Dockerfile \
   -t "$ACR_LOGIN_SERVER/worker-ai:latest" ../../../../apps/worker-ai
 docker push "$ACR_LOGIN_SERVER/worker-ai:latest"
+
+docker build --platform linux/amd64 -f ../../../../apps/api-go/Dockerfile.migrations \
+  -t "$ACR_LOGIN_SERVER/legalmove-migrations:latest" ../../../../apps/api-go
+docker push "$ACR_LOGIN_SERVER/legalmove-migrations:latest"
 ```
 
-## Validate API (after apply)
+## Run SQL migrations (Block 4.G)
+
+After `terraform apply`:
+
+```bash
+./infra/scripts/azure/start-migration-job.sh
+```
+
+Or:
+
+```bash
+az containerapp job start \
+  --name "$(terraform output -raw migration_job_name)" \
+  --resource-group "$(terraform output -raw resource_group_name)"
+```
+
+See [Milestone 4.G](../../docs/milestone-4.g-cloud-migrations-qa.md) for execution verification, schema checks, and E2E QA.
+
+## Validate API (after migrations)
 
 ```bash
 curl -sS "$(terraform output -raw api_container_app_url)/health"
+curl -sS "$(terraform output -raw api_container_app_url)/analyses"
 ```
 
 ## Read DATABASE-URL
@@ -145,6 +176,7 @@ Configured automatically by Terraform. See [Milestone 4.F](../../docs/milestone-
 
 ## Documentation
 
+- [Milestone 4.G — Cloud migrations + QA](../../docs/milestone-4.g-cloud-migrations-qa.md)
 - [Milestone 4.F — Container Apps deploy](../../docs/milestone-4.f-container-apps-deploy.md)
 - [Milestone 4.E — Azure adapters](../../docs/milestone-4.e-azure-adapters.md)
 - [Milestone 4.D — Container Apps Environment](../../docs/milestone-4.d-container-apps-environment.md)

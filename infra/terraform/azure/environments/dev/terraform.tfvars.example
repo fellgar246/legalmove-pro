@@ -74,3 +74,11 @@ pdf_max_bytes          = 20971520
 pdf_min_text_chars     = 32
 openai_api_key_secret_name = "OPENAI-API-KEY"
 # Set worker_use_mock_result = true to skip OPENAI-API-KEY Key Vault reference during initial deploy.
+
+# --- Block 4.G: SQL migrations (Container Apps Job) ---
+# Push legalmove-migrations:latest to ACR before first apply (see docs/milestone-4.g-cloud-migrations-qa.md).
+create_migration_job = true
+# migration_image_name = "legalmove-migrations"
+# migration_image_tag  = "latest"
+# migration_replica_timeout_in_seconds = 300
+# migration_direction  = "up"

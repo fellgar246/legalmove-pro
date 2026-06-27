@@ -116,8 +116,9 @@ output "worker_managed_identity_client_id" {
 output "expected_acr_image_tags" {
   description = "Suggested image repository:tag values when pushing to ACR."
   value = {
-    api_go    = "${module.acr.login_server}/api-go:latest"
-    worker_ai = "${module.acr.login_server}/worker-ai:latest"
+    api_go               = "${module.acr.login_server}/api-go:latest"
+    worker_ai            = "${module.acr.login_server}/worker-ai:latest"
+    legalmove_migrations = "${module.acr.login_server}/legalmove-migrations:latest"
   }
 }
 
@@ -224,4 +225,19 @@ output "worker_container_app_id" {
 output "worker_revision_name" {
   description = "Latest worker Container App revision name (null if create_container_apps=false)."
   value       = local.deploy_container_apps ? module.container_apps[0].worker_revision_name : null
+}
+
+output "migration_job_name" {
+  description = "Migration Container Apps Job name (null if create_migration_job=false or Container Apps not deployed)."
+  value       = local.deploy_migration_job ? module.container_apps[0].migration_job_name : null
+}
+
+output "migration_job_id" {
+  description = "Migration Container Apps Job resource ID (null if create_migration_job=false or Container Apps not deployed)."
+  value       = local.deploy_migration_job ? module.container_apps[0].migration_job_id : null
+}
+
+output "migration_image" {
+  description = "Full ACR image reference for the migration job (null if create_migration_job=false or Container Apps not deployed)."
+  value       = local.deploy_migration_job ? module.container_apps[0].migration_image : null
 }
