@@ -18,6 +18,8 @@ func TestParseStorageProvider(t *testing.T) {
 		{raw: " LOCAL ", want: StorageProviderLocal},
 		{raw: "s3", want: StorageProviderS3},
 		{raw: "S3", want: StorageProviderS3},
+		{raw: "azure_blob", want: StorageProviderAzureBlob},
+		{raw: " AZURE_BLOB ", want: StorageProviderAzureBlob},
 		{raw: "gcs", wantErr: true},
 	}
 
@@ -107,6 +109,62 @@ func TestNewServiceS3WithMockClient(t *testing.T) {
 	}
 	if svc == nil {
 		t.Fatal("NewService(s3) returned nil service")
+	}
+}
+
+func TestNewServiceAzureBlobRequiresClientAndConfig(t *testing.T) {
+	t.Parallel()
+
+	_, err := NewService(ServiceConfig{
+		Provider:                  StorageProviderAzureBlob,
+		AzureStorageAccountName:   "account",
+		AzureStorageContainerName: "documents",
+	})
+	if err == nil {
+		t.Fatal("NewService(azure_blob) without client expected error")
+	}
+	if !strings.Contains(err.Error(), "azure blob client is required") {
+		t.Fatalf("error = %v", err)
+	}
+
+	_, err = NewService(ServiceConfig{
+		Provider:        StorageProviderAzureBlob,
+		AzureBlobClient: &mockBlobClient{},
+	})
+	if err == nil {
+		t.Fatal("NewService(azure_blob) without account expected error")
+	}
+	if !strings.Contains(err.Error(), "AZURE_STORAGE_ACCOUNT_NAME") {
+		t.Fatalf("error = %v", err)
+	}
+
+	_, err = NewService(ServiceConfig{
+		Provider:                StorageProviderAzureBlob,
+		AzureStorageAccountName: "account",
+		AzureBlobClient:         &mockBlobClient{},
+	})
+	if err == nil {
+		t.Fatal("NewService(azure_blob) without container expected error")
+	}
+	if !strings.Contains(err.Error(), "AZURE_STORAGE_CONTAINER_NAME") {
+		t.Fatalf("error = %v", err)
+	}
+}
+
+func TestNewServiceAzureBlobWithMockClient(t *testing.T) {
+	t.Parallel()
+
+	svc, err := NewService(ServiceConfig{
+		Provider:                  StorageProviderAzureBlob,
+		AzureStorageAccountName:   "account",
+		AzureStorageContainerName: "documents",
+		AzureBlobClient:           &mockBlobClient{},
+	})
+	if err != nil {
+		t.Fatalf("NewService(azure_blob) error = %v", err)
+	}
+	if svc == nil {
+		t.Fatal("NewService(azure_blob) returned nil service")
 	}
 }
 

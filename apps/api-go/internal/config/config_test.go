@@ -102,3 +102,53 @@ func TestLoadSQSRequiresQueueURL(t *testing.T) {
 		t.Fatalf("error = %v", err)
 	}
 }
+
+func TestLoadAzureBlobRequiresStorageConfig(t *testing.T) {
+	setRequiredEnv(t)
+	t.Setenv("STORAGE_PROVIDER", "azure_blob")
+	t.Setenv("AZURE_STORAGE_ACCOUNT_NAME", "")
+	t.Setenv("AZURE_STORAGE_CONTAINER_NAME", "")
+
+	_, err := Load()
+	if err == nil {
+		t.Fatal("Load() expected error for missing AZURE_STORAGE_ACCOUNT_NAME")
+	}
+	if !strings.Contains(err.Error(), "AZURE_STORAGE_ACCOUNT_NAME") {
+		t.Fatalf("error = %v", err)
+	}
+
+	t.Setenv("AZURE_STORAGE_ACCOUNT_NAME", "lmprodev0001")
+	_, err = Load()
+	if err == nil {
+		t.Fatal("Load() expected error for missing AZURE_STORAGE_CONTAINER_NAME")
+	}
+	if !strings.Contains(err.Error(), "AZURE_STORAGE_CONTAINER_NAME") {
+		t.Fatalf("error = %v", err)
+	}
+}
+
+func TestLoadAzureServiceBusRequiresQueueConfig(t *testing.T) {
+	setRequiredEnv(t)
+	t.Setenv("STORAGE_PROVIDER", "local")
+	t.Setenv("UPLOADS_DIR", t.TempDir())
+	t.Setenv("QUEUE_PROVIDER", "azure_service_bus")
+	t.Setenv("AZURE_SERVICE_BUS_NAMESPACE", "")
+	t.Setenv("AZURE_SERVICE_BUS_QUEUE_NAME", "")
+
+	_, err := Load()
+	if err == nil {
+		t.Fatal("Load() expected error for missing AZURE_SERVICE_BUS_NAMESPACE")
+	}
+	if !strings.Contains(err.Error(), "AZURE_SERVICE_BUS_NAMESPACE") {
+		t.Fatalf("error = %v", err)
+	}
+
+	t.Setenv("AZURE_SERVICE_BUS_NAMESPACE", "sb-lmpro-dev")
+	_, err = Load()
+	if err == nil {
+		t.Fatal("Load() expected error for missing AZURE_SERVICE_BUS_QUEUE_NAME")
+	}
+	if !strings.Contains(err.Error(), "AZURE_SERVICE_BUS_QUEUE_NAME") {
+		t.Fatalf("error = %v", err)
+	}
+}

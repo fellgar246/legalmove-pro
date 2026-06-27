@@ -22,6 +22,12 @@ type Config struct {
 	S3Bucket        string
 	S3Prefix        string
 	SQSQueueURL     string
+
+	AzureStorageAccountName   string
+	AzureStorageContainerName string
+	AzureServiceBusNamespace  string
+	AzureServiceBusQueueName  string
+	AzureClientID             string
 }
 
 func Load() (Config, error) {
@@ -46,15 +52,20 @@ func Load() (Config, error) {
 	}
 
 	cfg := Config{
-		AppEnv:          os.Getenv("APP_ENV"),
-		DatabaseURL:     os.Getenv("DATABASE_URL"),
-		UploadsDir:      os.Getenv("UPLOADS_DIR"),
-		StorageProvider: storageProvider,
-		QueueProvider:   queueProvider,
-		AWSRegion:       strings.TrimSpace(os.Getenv("AWS_REGION")),
-		S3Bucket:        strings.TrimSpace(os.Getenv("S3_BUCKET")),
-		S3Prefix:        strings.Trim(strings.TrimSpace(os.Getenv("S3_PREFIX")), "/"),
-		SQSQueueURL:     strings.TrimSpace(os.Getenv("SQS_QUEUE_URL")),
+		AppEnv:                    os.Getenv("APP_ENV"),
+		DatabaseURL:               os.Getenv("DATABASE_URL"),
+		UploadsDir:                os.Getenv("UPLOADS_DIR"),
+		StorageProvider:           storageProvider,
+		QueueProvider:             queueProvider,
+		AWSRegion:                 strings.TrimSpace(os.Getenv("AWS_REGION")),
+		S3Bucket:                  strings.TrimSpace(os.Getenv("S3_BUCKET")),
+		S3Prefix:                  strings.Trim(strings.TrimSpace(os.Getenv("S3_PREFIX")), "/"),
+		SQSQueueURL:               strings.TrimSpace(os.Getenv("SQS_QUEUE_URL")),
+		AzureStorageAccountName:   strings.TrimSpace(os.Getenv("AZURE_STORAGE_ACCOUNT_NAME")),
+		AzureStorageContainerName: strings.TrimSpace(os.Getenv("AZURE_STORAGE_CONTAINER_NAME")),
+		AzureServiceBusNamespace:  strings.TrimSpace(os.Getenv("AZURE_SERVICE_BUS_NAMESPACE")),
+		AzureServiceBusQueueName:  strings.TrimSpace(os.Getenv("AZURE_SERVICE_BUS_QUEUE_NAME")),
+		AzureClientID:             strings.TrimSpace(os.Getenv("AZURE_CLIENT_ID")),
 	}
 
 	portStr := os.Getenv("API_PORT")
@@ -89,6 +100,16 @@ func Load() (Config, error) {
 		if cfg.UploadsDir == "" {
 			cfg.UploadsDir = os.TempDir()
 		}
+	case storage.StorageProviderAzureBlob:
+		if cfg.AzureStorageAccountName == "" {
+			return Config{}, fmt.Errorf("AZURE_STORAGE_ACCOUNT_NAME is required when STORAGE_PROVIDER=azure_blob")
+		}
+		if cfg.AzureStorageContainerName == "" {
+			return Config{}, fmt.Errorf("AZURE_STORAGE_CONTAINER_NAME is required when STORAGE_PROVIDER=azure_blob")
+		}
+		if cfg.UploadsDir == "" {
+			cfg.UploadsDir = os.TempDir()
+		}
 	default:
 		return Config{}, fmt.Errorf("unsupported storage provider: %q", cfg.StorageProvider)
 	}
@@ -102,6 +123,13 @@ func Load() (Config, error) {
 		}
 		if cfg.SQSQueueURL == "" {
 			return Config{}, fmt.Errorf("SQS_QUEUE_URL is required when QUEUE_PROVIDER=sqs")
+		}
+	case queue.QueueProviderAzureServiceBus:
+		if cfg.AzureServiceBusNamespace == "" {
+			return Config{}, fmt.Errorf("AZURE_SERVICE_BUS_NAMESPACE is required when QUEUE_PROVIDER=azure_service_bus")
+		}
+		if cfg.AzureServiceBusQueueName == "" {
+			return Config{}, fmt.Errorf("AZURE_SERVICE_BUS_QUEUE_NAME is required when QUEUE_PROVIDER=azure_service_bus")
 		}
 	default:
 		return Config{}, fmt.Errorf("unsupported queue provider: %q", cfg.QueueProvider)

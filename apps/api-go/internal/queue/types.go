@@ -9,8 +9,9 @@ import (
 type QueueProvider string
 
 const (
-	QueueProviderPostgres QueueProvider = "postgres"
-	QueueProviderSQS      QueueProvider = "sqs"
+	QueueProviderPostgres          QueueProvider = "postgres"
+	QueueProviderSQS               QueueProvider = "sqs"
+	QueueProviderAzureServiceBus   QueueProvider = "azure_service_bus"
 )
 
 const DispatchSchemaVersion = "1.0"

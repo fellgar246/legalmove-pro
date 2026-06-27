@@ -8,8 +8,9 @@ import (
 type StorageProvider string
 
 const (
-	StorageProviderLocal StorageProvider = "local"
-	StorageProviderS3    StorageProvider = "s3"
+	StorageProviderLocal     StorageProvider = "local"
+	StorageProviderS3        StorageProvider = "s3"
+	StorageProviderAzureBlob StorageProvider = "azure_blob"
 )
 
 type SaveObjectInput struct {

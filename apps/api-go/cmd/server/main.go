@@ -36,17 +36,21 @@ func main() {
 	defer pool.Close()
 
 	storageCfg := storage.ServiceConfig{
-		Provider:   cfg.StorageProvider,
-		UploadsDir: cfg.UploadsDir,
-		AWSRegion:  cfg.AWSRegion,
-		S3Bucket:   cfg.S3Bucket,
-		S3Prefix:   cfg.S3Prefix,
+		Provider:                  cfg.StorageProvider,
+		UploadsDir:                cfg.UploadsDir,
+		AWSRegion:                 cfg.AWSRegion,
+		S3Bucket:                  cfg.S3Bucket,
+		S3Prefix:                  cfg.S3Prefix,
+		AzureStorageAccountName:   cfg.AzureStorageAccountName,
+		AzureStorageContainerName: cfg.AzureStorageContainerName,
 	}
 
 	queueCfg := queue.DispatcherConfig{
-		Provider:  cfg.QueueProvider,
-		AWSRegion: cfg.AWSRegion,
-		QueueURL:  cfg.SQSQueueURL,
+		Provider:                 cfg.QueueProvider,
+		AWSRegion:                cfg.AWSRegion,
+		QueueURL:                 cfg.SQSQueueURL,
+		AzureServiceBusNamespace: cfg.AzureServiceBusNamespace,
+		AzureServiceBusQueueName:   cfg.AzureServiceBusQueueName,
 	}
 
 	needsAWS := cfg.StorageProvider == storage.StorageProviderS3 || cfg.QueueProvider == queue.QueueProviderSQS
@@ -63,6 +67,33 @@ func main() {
 		}
 		if cfg.QueueProvider == queue.QueueProviderSQS {
 			queueCfg.SQSClient = queue.NewSQSClient(sqs.NewFromConfig(awsCfg))
+		}
+	}
+
+	needsAzure := cfg.StorageProvider == storage.StorageProviderAzureBlob ||
+		cfg.QueueProvider == queue.QueueProviderAzureServiceBus
+	if needsAzure {
+		azureCred, err := storage.NewAzureCredential(cfg.AzureClientID)
+		if err != nil {
+			log.Fatalf("load azure credential: %v", err)
+		}
+		if cfg.StorageProvider == storage.StorageProviderAzureBlob {
+			blobClient, err := storage.NewAzureBlobSDKClient(cfg.AzureStorageAccountName, azureCred)
+			if err != nil {
+				log.Fatalf("init azure blob client: %v", err)
+			}
+			storageCfg.AzureBlobClient = storage.NewAzureBlobClient(blobClient)
+		}
+		if cfg.QueueProvider == queue.QueueProviderAzureServiceBus {
+			sender, err := queue.NewAzureServiceBusSDKClient(
+				cfg.AzureServiceBusNamespace,
+				cfg.AzureServiceBusQueueName,
+				azureCred,
+			)
+			if err != nil {
+				log.Fatalf("init azure service bus sender: %v", err)
+			}
+			queueCfg.ServiceBusClient = queue.NewAzureServiceBusClient(sender)
 		}
 	}
 
@@ -86,7 +117,8 @@ func main() {
 	})
 	addr := fmt.Sprintf(":%d", cfg.APIPort)
 
-	if cfg.StorageProvider == storage.StorageProviderS3 {
+	switch cfg.StorageProvider {
+	case storage.StorageProviderS3:
 		log.Printf(
 			"starting legalmove-api on %s (env=%s, storage=s3, bucket=%s, prefix=%s, region=%s, queue=%s)",
 			addr,
@@ -96,7 +128,16 @@ func main() {
 			cfg.AWSRegion,
 			cfg.QueueProvider,
 		)
-	} else {
+	case storage.StorageProviderAzureBlob:
+		log.Printf(
+			"starting legalmove-api on %s (env=%s, storage=azure_blob, account=%s, container=%s, queue=%s)",
+			addr,
+			cfg.AppEnv,
+			cfg.AzureStorageAccountName,
+			cfg.AzureStorageContainerName,
+			cfg.QueueProvider,
+		)
+	default:
 		log.Printf(
 			"starting legalmove-api on %s (env=%s, storage=local, uploads=%s, queue=%s)",
 			addr,

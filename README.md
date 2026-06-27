@@ -112,6 +112,8 @@ Archived AWS docs: [4.1](docs/milestone-4.1-terraform-foundation.md), [4.2](docs
 
 - [Milestone 2.3 — PDF native + S3/SQS](docs/milestone-2.3-pdf-native.md) — full architecture and block history
 - [Milestone 3 — Frontend MVP](docs/milestone-3-frontend-mvp.md) — UI flows and local setup
+- [Milestone 4.F — Container Apps deploy](docs/milestone-4.f-container-apps-deploy.md) — API + Worker on Azure (Block 4.F)
+- [Milestone 4.E — Azure adapters](docs/milestone-4.e-azure-adapters.md) — Blob + Service Bus Go/Python (Block 4.E)
 - [Milestone 4.D — Container Apps Environment](docs/milestone-4.d-container-apps-environment.md) — Log Analytics, CAE, AcrPull RBAC (Block 4.D)
 - [Milestone 4.C — Azure PostgreSQL + networking](docs/milestone-4.c-azure-postgres-networking.md) — VNet, private PostgreSQL, DATABASE-URL (Block 4.C)
 - [Milestone 4.B — Azure Terraform foundation](docs/milestone-4.b-azure-foundation.md) — ACR, Blob, Service Bus, Key Vault (Block 4.B)
@@ -135,7 +137,9 @@ Milestone 2.3 (Blocks 1–8) is **complete** for local and cloud-ready paths:
 - Block 4.B (Terraform Azure foundation): RG, ACR, Blob, Service Bus, Key Vault, managed identities — **done**
 - Block 4.C (PostgreSQL + networking): VNet, private PostgreSQL, `DATABASE-URL` in Key Vault — **done**
 - Block 4.D (Container Apps Environment): Log Analytics, CAE VNet integration, AcrPull RBAC — **done**
-- Block 4.E (next): Container Apps for API and Worker
-- Blocks 4.F–4.H: App adapters, migration runner, CI/CD
+- Block 4.E (Azure adapters): Blob + Service Bus in Go/Python, DB migration — **done**
+- Block 4.F (Container Apps deploy): API + Worker on Azure — **done**
+- Block 4.G (next): Migration runner + CI/CD
+- Block 4.H: Frontend hosting
 
 Archived AWS blocks (reference only): 4.1 (ECR/S3/SQS), 4.2 (VPC/RDS), 4.3 (ECS task defs). Dockerfiles remain reusable for Azure Container Apps.

@@ -14,6 +14,10 @@ type ServiceConfig struct {
 	S3Bucket   string
 	S3Prefix   string
 	S3Client   s3API
+
+	AzureStorageAccountName  string
+	AzureStorageContainerName string
+	AzureBlobClient          blobAPI
 }
 
 func ParseStorageProvider(raw string) (StorageProvider, error) {
@@ -22,6 +26,8 @@ func ParseStorageProvider(raw string) (StorageProvider, error) {
 		return StorageProviderLocal, nil
 	case "s3":
 		return StorageProviderS3, nil
+	case "azure_blob":
+		return StorageProviderAzureBlob, nil
 	default:
 		return "", fmt.Errorf("unsupported storage provider: %q", raw)
 	}
@@ -46,6 +52,21 @@ func NewService(cfg ServiceConfig) (StorageService, error) {
 			return nil, fmt.Errorf("s3 client is required when STORAGE_PROVIDER=s3")
 		}
 		return NewS3StorageService(client, cfg.S3Bucket, cfg.S3Prefix), nil
+	case StorageProviderAzureBlob:
+		if strings.TrimSpace(cfg.AzureStorageAccountName) == "" {
+			return nil, fmt.Errorf("AZURE_STORAGE_ACCOUNT_NAME is required when STORAGE_PROVIDER=azure_blob")
+		}
+		if strings.TrimSpace(cfg.AzureStorageContainerName) == "" {
+			return nil, fmt.Errorf("AZURE_STORAGE_CONTAINER_NAME is required when STORAGE_PROVIDER=azure_blob")
+		}
+		if cfg.AzureBlobClient == nil {
+			return nil, fmt.Errorf("azure blob client is required when STORAGE_PROVIDER=azure_blob")
+		}
+		return NewAzureBlobStorageService(
+			cfg.AzureBlobClient,
+			cfg.AzureStorageAccountName,
+			cfg.AzureStorageContainerName,
+		), nil
 	default:
 		return nil, fmt.Errorf("unsupported storage provider: %q", cfg.Provider)
 	}
