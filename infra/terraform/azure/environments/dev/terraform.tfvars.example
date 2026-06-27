@@ -52,3 +52,25 @@ log_analytics_retention_days                  = 30
 container_apps_internal_load_balancer_enabled = false
 container_apps_zone_redundancy_enabled        = false
 container_apps_workload_profile_type          = "Consumption"
+
+# --- Block 4.F: Container Apps (API + Worker) ---
+# Push api-go:latest and worker-ai:latest to ACR before first apply (see docs/milestone-4.f-container-apps-deploy.md).
+create_container_apps = true
+container_image_tag   = "latest"
+# api_image_name        = "api-go"
+# worker_image_name     = "worker-ai"
+api_min_replicas    = 1
+api_max_replicas    = 2
+worker_min_replicas = 1
+worker_max_replicas = 1
+api_cpu             = 0.5
+api_memory          = "1Gi"
+worker_cpu          = 1.0
+worker_memory       = "2Gi"
+api_port            = 8080
+worker_use_mock_result = false
+document_temp_dir      = "/tmp/legalmove-documents"
+pdf_max_bytes          = 20971520
+pdf_min_text_chars     = 32
+openai_api_key_secret_name = "OPENAI-API-KEY"
+# Set worker_use_mock_result = true to skip OPENAI-API-KEY Key Vault reference during initial deploy.

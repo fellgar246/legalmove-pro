@@ -36,7 +36,12 @@ variable "key_vault_id" {
 variable "acr_id" {
   type        = string
   description = "ACR resource ID for AcrPull role assignments on API and worker identities."
-  default     = null
+}
+
+variable "create_acr_pull" {
+  type        = bool
+  description = "Assign AcrPull on ACR for API and worker identities. Use a bool (not acr_id != null) so count is known at plan time."
+  default     = true
 }
 
 variable "tags" {

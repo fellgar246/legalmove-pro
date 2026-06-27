@@ -54,7 +54,7 @@ resource "azurerm_role_assignment" "worker_keyvault_secrets_user" {
 }
 
 resource "azurerm_role_assignment" "api_acr_pull" {
-  count = var.acr_id != null ? 1 : 0
+  count = var.create_acr_pull ? 1 : 0
 
   scope                = var.acr_id
   role_definition_name = "AcrPull"
@@ -62,7 +62,7 @@ resource "azurerm_role_assignment" "api_acr_pull" {
 }
 
 resource "azurerm_role_assignment" "worker_acr_pull" {
-  count = var.acr_id != null ? 1 : 0
+  count = var.create_acr_pull ? 1 : 0
 
   scope                = var.acr_id
   role_definition_name = "AcrPull"

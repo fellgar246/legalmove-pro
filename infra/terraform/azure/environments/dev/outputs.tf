@@ -190,3 +190,38 @@ output "container_apps_default_domain" {
   description = "Default domain suffix for future Container Apps ingress (null if create_container_apps_environment=false)."
   value       = var.create_container_apps_environment ? module.container_apps_environment[0].container_apps_default_domain : null
 }
+
+output "api_container_app_name" {
+  description = "API Container App name (null if create_container_apps=false)."
+  value       = local.deploy_container_apps ? module.container_apps[0].api_container_app_name : null
+}
+
+output "api_container_app_id" {
+  description = "API Container App resource ID (null if create_container_apps=false)."
+  value       = local.deploy_container_apps ? module.container_apps[0].api_container_app_id : null
+}
+
+output "api_container_app_url" {
+  description = "Public HTTPS URL for the API Container App (null if create_container_apps=false)."
+  value       = local.deploy_container_apps ? module.container_apps[0].api_container_app_url : null
+}
+
+output "api_revision_name" {
+  description = "Latest API Container App revision name (null if create_container_apps=false)."
+  value       = local.deploy_container_apps ? module.container_apps[0].api_revision_name : null
+}
+
+output "worker_container_app_name" {
+  description = "Worker Container App name (null if create_container_apps=false)."
+  value       = local.deploy_container_apps ? module.container_apps[0].worker_container_app_name : null
+}
+
+output "worker_container_app_id" {
+  description = "Worker Container App resource ID (null if create_container_apps=false)."
+  value       = local.deploy_container_apps ? module.container_apps[0].worker_container_app_id : null
+}
+
+output "worker_revision_name" {
+  description = "Latest worker Container App revision name (null if create_container_apps=false)."
+  value       = local.deploy_container_apps ? module.container_apps[0].worker_revision_name : null
+}

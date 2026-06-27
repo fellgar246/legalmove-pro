@@ -49,6 +49,8 @@ locals {
     var.postgres_server_name,
     substr("psql-lmpro-${var.environment}-${local.name_suffix}", 0, 63),
   )
+
+  deploy_container_apps = var.create_container_apps && var.create_container_apps_environment && var.create_managed_identities
 }
 
 module "resource_group" {
@@ -196,4 +198,66 @@ module "container_apps_environment" {
   tags = local.common_tags
 
   depends_on = [module.networking]
+}
+
+module "container_apps" {
+  source = "../../modules/container_apps"
+  count  = local.deploy_container_apps ? 1 : 0
+
+  project_name        = var.project_name
+  environment         = var.environment
+  resource_group_name = module.resource_group.name
+  location            = module.resource_group.location
+
+  container_app_environment_id = module.container_apps_environment[0].container_apps_environment_id
+  acr_login_server             = module.acr.login_server
+
+  api_managed_identity_id           = module.managed_identities[0].api_identity_id
+  api_managed_identity_client_id    = module.managed_identities[0].api_identity_client_id
+  worker_managed_identity_id        = module.managed_identities[0].worker_identity_id
+  worker_managed_identity_client_id = module.managed_identities[0].worker_identity_client_id
+
+  storage_account_name      = module.blob_documents.account_name
+  storage_container_name    = module.blob_documents.container_name
+  servicebus_namespace_name = module.service_bus_analysis.namespace_name
+  servicebus_queue_name     = module.service_bus_analysis.queue_name
+
+  key_vault_id               = module.key_vault.id
+  database_url_secret_id     = module.postgres_flexible.database_url_secret_id
+  database_url_secret_name   = var.database_url_secret_name
+  openai_api_key_secret_name = var.openai_api_key_secret_name
+
+  container_image_tag = var.container_image_tag
+  api_image_name      = var.api_image_name
+  worker_image_name   = var.worker_image_name
+
+  api_container_app_name    = var.api_container_app_name
+  worker_container_app_name = var.worker_container_app_name
+
+  api_min_replicas    = var.api_min_replicas
+  api_max_replicas    = var.api_max_replicas
+  worker_min_replicas = var.worker_min_replicas
+  worker_max_replicas = var.worker_max_replicas
+
+  api_cpu       = var.api_cpu
+  api_memory    = var.api_memory
+  worker_cpu    = var.worker_cpu
+  worker_memory = var.worker_memory
+  api_port      = var.api_port
+
+  worker_use_mock_result              = var.worker_use_mock_result
+  document_temp_dir                   = var.document_temp_dir
+  pdf_max_bytes                       = var.pdf_max_bytes
+  pdf_min_text_chars                  = var.pdf_min_text_chars
+  worker_poll_interval_seconds        = var.worker_poll_interval_seconds
+  azure_service_bus_wait_time_seconds = var.azure_service_bus_wait_time_seconds
+  workload_profile_name               = var.container_apps_workload_profile_type
+
+  tags = local.common_tags
+
+  depends_on = [
+    module.container_apps_environment,
+    module.managed_identities,
+    module.postgres_flexible,
+  ]
 }
