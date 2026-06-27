@@ -69,6 +69,17 @@ S3_BUCKET = _env_str("S3_BUCKET")
 S3_PREFIX = _env_str("S3_PREFIX")
 DOCUMENT_TEMP_DIR = _env_str("DOCUMENT_TEMP_DIR", "./tmp/documents")
 
+AZURE_STORAGE_ACCOUNT_NAME = _env_str("AZURE_STORAGE_ACCOUNT_NAME")
+AZURE_STORAGE_CONTAINER_NAME = _env_str("AZURE_STORAGE_CONTAINER_NAME")
+AZURE_SERVICE_BUS_NAMESPACE = _env_str("AZURE_SERVICE_BUS_NAMESPACE")
+AZURE_SERVICE_BUS_QUEUE_NAME = _env_str("AZURE_SERVICE_BUS_QUEUE_NAME")
+AZURE_CLIENT_ID = _env_str("AZURE_CLIENT_ID")
+AZURE_SERVICE_BUS_WAIT_TIME_SECONDS = _parse_int(
+    os.getenv("AZURE_SERVICE_BUS_WAIT_TIME_SECONDS"),
+    "AZURE_SERVICE_BUS_WAIT_TIME_SECONDS",
+    10,
+)
+
 SQS_QUEUE_URL = _env_str("SQS_QUEUE_URL")
 SQS_WAIT_TIME_SECONDS = _parse_int(
     os.getenv("SQS_WAIT_TIME_SECONDS"), "SQS_WAIT_TIME_SECONDS", 10
@@ -114,6 +125,15 @@ def validate_queue_config() -> None:
     provider = (QUEUE_PROVIDER or "postgres").strip().lower()
     if provider == "sqs" and not SQS_QUEUE_URL:
         raise ValueError("SQS_QUEUE_URL is required when QUEUE_PROVIDER=sqs")
+    if provider == "azure_service_bus":
+        if not AZURE_SERVICE_BUS_NAMESPACE:
+            raise ValueError(
+                "AZURE_SERVICE_BUS_NAMESPACE is required when QUEUE_PROVIDER=azure_service_bus"
+            )
+        if not AZURE_SERVICE_BUS_QUEUE_NAME:
+            raise ValueError(
+                "AZURE_SERVICE_BUS_QUEUE_NAME is required when QUEUE_PROVIDER=azure_service_bus"
+            )
 
 
 def validate_openai_config() -> None:

@@ -43,6 +43,22 @@ def _s3_ref(
     )
 
 
+def _azure_blob_ref(
+    *,
+    storage_key: str = "documents/original/2026/06/abc-contract.pdf",
+    original_filename: str = "contract.pdf",
+    content_type: str = "application/pdf",
+) -> DocumentStorageRef:
+    return DocumentStorageRef(
+        document_id="doc-azure",
+        storage_provider="azure_blob",
+        storage_path=storage_key,
+        storage_key=storage_key,
+        original_filename=original_filename,
+        content_type=content_type,
+    )
+
+
 def test_materialize_local_returns_existing_path_without_cleanup(tmp_path, monkeypatch):
     uploads_dir = tmp_path / "uploads"
     uploads_dir.mkdir()
@@ -228,3 +244,58 @@ def test_infer_document_extension_prefers_storage_key():
         content_type="image/png",
     )
     assert infer_document_extension(ref) == ".pdf"
+
+
+def test_materialize_azure_blob_downloads_to_temp_file_with_pdf_extension(tmp_path):
+    temp_dir = tmp_path / "documents"
+    temp_dir.mkdir()
+    payload = b"%PDF-1.4 mock"
+    key = "documents/original/2026/06/abc-contract.pdf"
+
+    blob_client = MagicMock()
+    download = MagicMock()
+    download.readall.return_value = payload
+    blob_client.download_blob.return_value = download
+
+    blob_service_client = MagicMock()
+    blob_service_client.get_blob_client.return_value = blob_client
+
+    materializer = DocumentMaterializer(
+        azure_storage_account_name="lmprodev0001",
+        azure_storage_container_name="documents",
+        temp_dir=str(temp_dir),
+        blob_service_client=blob_service_client,
+    )
+    materialized = materializer.materialize(_azure_blob_ref(storage_key=key))
+
+    assert materialized.should_cleanup is True
+    assert materialized.local_path.endswith(".pdf")
+    assert Path(materialized.local_path).read_bytes() == payload
+    blob_service_client.get_blob_client.assert_called_once_with(
+        container="documents",
+        blob=key,
+    )
+
+
+def test_materialize_azure_blob_requires_storage_account():
+    materializer = DocumentMaterializer(
+        azure_storage_account_name="",
+        azure_storage_container_name="documents",
+    )
+    with pytest.raises(
+        DocumentMaterializationError,
+        match="AZURE_STORAGE_ACCOUNT_NAME is required",
+    ):
+        materializer.materialize(_azure_blob_ref())
+
+
+def test_materialize_azure_blob_requires_container():
+    materializer = DocumentMaterializer(
+        azure_storage_account_name="account",
+        azure_storage_container_name="",
+    )
+    with pytest.raises(
+        DocumentMaterializationError,
+        match="AZURE_STORAGE_CONTAINER_NAME is required",
+    ):
+        materializer.materialize(_azure_blob_ref())

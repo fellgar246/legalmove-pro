@@ -1,7 +1,15 @@
 import logging
 from typing import Any
 
-from config import AWS_REGION, DOCUMENT_TEMP_DIR, S3_BUCKET, WORKER_USE_MOCK_RESULT
+from config import (
+    AWS_REGION,
+    AZURE_CLIENT_ID,
+    AZURE_STORAGE_ACCOUNT_NAME,
+    AZURE_STORAGE_CONTAINER_NAME,
+    DOCUMENT_TEMP_DIR,
+    S3_BUCKET,
+    WORKER_USE_MOCK_RESULT,
+)
 from pipeline.contract_analysis import run_contract_analysis
 from pipeline.errors import DocumentLoadError, PipelineError
 from job_queues.job_queue import ClaimedAnalysisJob, JobQueue
@@ -60,6 +68,9 @@ def _get_materializer() -> DocumentMaterializer:
         _materializer = DocumentMaterializer(
             aws_region=AWS_REGION,
             s3_bucket=S3_BUCKET,
+            azure_storage_account_name=AZURE_STORAGE_ACCOUNT_NAME,
+            azure_storage_container_name=AZURE_STORAGE_CONTAINER_NAME,
+            azure_client_id=AZURE_CLIENT_ID,
             temp_dir=DOCUMENT_TEMP_DIR,
         )
     return _materializer

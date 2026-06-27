@@ -85,13 +85,21 @@ class DocumentMaterializer:
         *,
         aws_region: str = "",
         s3_bucket: str = "",
+        azure_storage_account_name: str = "",
+        azure_storage_container_name: str = "",
+        azure_client_id: str = "",
         temp_dir: str = "",
         s3_client: Any | None = None,
+        blob_service_client: Any | None = None,
     ) -> None:
         self._aws_region = aws_region.strip()
         self._s3_bucket = s3_bucket.strip()
+        self._azure_storage_account_name = azure_storage_account_name.strip()
+        self._azure_storage_container_name = azure_storage_container_name.strip()
+        self._azure_client_id = azure_client_id.strip()
         self._temp_dir = temp_dir.strip()
         self._s3_client = s3_client
+        self._blob_service_client = blob_service_client
 
     def materialize(self, doc: DocumentStorageRef) -> MaterializedDocument:
         provider = _normalize_provider(doc.storage_provider)
@@ -100,6 +108,8 @@ class DocumentMaterializer:
             return MaterializedDocument(local_path=local_path, should_cleanup=False)
         if provider == "s3":
             return self._materialize_s3(doc)
+        if provider == "azure_blob":
+            return self._materialize_azure_blob(doc)
         raise DocumentMaterializationError(
             f"Unsupported document storage provider: {doc.storage_provider!r}"
         )
@@ -136,6 +146,45 @@ class DocumentMaterializer:
         if not Path(temp_path).is_file():
             raise DocumentMaterializationError(
                 f"Downloaded S3 document was not created: {temp_path}"
+            )
+
+        return MaterializedDocument(local_path=temp_path, should_cleanup=True)
+
+    def _materialize_azure_blob(self, doc: DocumentStorageRef) -> MaterializedDocument:
+        if not self._azure_storage_account_name:
+            raise DocumentMaterializationError(
+                "AZURE_STORAGE_ACCOUNT_NAME is required to materialize Azure Blob documents."
+            )
+        if not self._azure_storage_container_name:
+            raise DocumentMaterializationError(
+                "AZURE_STORAGE_CONTAINER_NAME is required to materialize Azure Blob documents."
+            )
+
+        key = (doc.storage_key or "").strip() or doc.storage_path.strip()
+        if not key:
+            raise DocumentMaterializationError("Azure Blob document is missing storage_key.")
+
+        suffix = infer_document_extension(doc)
+        temp_dir = self._prepare_temp_dir()
+        fd, temp_path = tempfile.mkstemp(suffix=suffix, dir=temp_dir)
+        os.close(fd)
+
+        client = self._get_blob_service_client()
+        try:
+            blob_client = client.get_blob_client(
+                container=self._azure_storage_container_name,
+                blob=key,
+            )
+            with open(temp_path, "wb") as handle:
+                stream = blob_client.download_blob()
+                handle.write(stream.readall())
+        except Exception as exc:
+            self._cleanup_partial(temp_path)
+            raise self._map_azure_blob_download_error(key, exc) from exc
+
+        if not Path(temp_path).is_file():
+            raise DocumentMaterializationError(
+                f"Downloaded Azure Blob document was not created: {temp_path}"
             )
 
         return MaterializedDocument(local_path=temp_path, should_cleanup=True)
@@ -184,6 +233,47 @@ class DocumentMaterializer:
             return DocumentMaterializationError(f"Failed to download S3 document: {key}")
 
         return DocumentMaterializationError(f"Failed to download S3 document: {key}")
+
+    def _get_blob_service_client(self) -> Any:
+        if self._blob_service_client is not None:
+            return self._blob_service_client
+
+        try:
+            from azure.identity import DefaultAzureCredential
+            from azure.storage.blob import BlobServiceClient
+        except ImportError as exc:
+            raise DocumentMaterializationError(
+                "azure-storage-blob and azure-identity are required to materialize Azure Blob documents."
+            ) from exc
+
+        credential_kwargs: dict[str, str] = {}
+        if self._azure_client_id:
+            credential_kwargs["managed_identity_client_id"] = self._azure_client_id
+
+        credential = DefaultAzureCredential(**credential_kwargs)
+        account_url = (
+            f"https://{self._azure_storage_account_name}.blob.core.windows.net"
+        )
+        client = BlobServiceClient(account_url=account_url, credential=credential)
+        self._blob_service_client = client
+        return client
+
+    def _map_azure_blob_download_error(
+        self, key: str, exc: Exception
+    ) -> DocumentMaterializationError:
+        try:
+            from azure.core.exceptions import ResourceNotFoundError
+        except ImportError:
+            return DocumentMaterializationError(
+                f"Failed to download Azure Blob document: {key}"
+            )
+
+        if isinstance(exc, ResourceNotFoundError):
+            return DocumentMaterializationError(f"Azure Blob document not found: {key}")
+
+        return DocumentMaterializationError(
+            f"Failed to download Azure Blob document: {key}"
+        )
 
     def _prepare_temp_dir(self) -> str:
         if self._temp_dir:

@@ -74,3 +74,12 @@ def test_validate_queue_config_requires_sqs_queue_url(monkeypatch):
     monkeypatch.setattr(config_module, "SQS_QUEUE_URL", "")
     with pytest.raises(ValueError, match="SQS_QUEUE_URL is required"):
         config_module.validate_queue_config()
+
+
+def test_validate_queue_config_requires_azure_service_bus_settings(monkeypatch):
+    monkeypatch.setattr(config_module, "DATABASE_URL", "postgres://example")
+    monkeypatch.setattr(config_module, "QUEUE_PROVIDER", "azure_service_bus")
+    monkeypatch.setattr(config_module, "AZURE_SERVICE_BUS_NAMESPACE", "")
+    monkeypatch.setattr(config_module, "AZURE_SERVICE_BUS_QUEUE_NAME", "analysis-jobs")
+    with pytest.raises(ValueError, match="AZURE_SERVICE_BUS_NAMESPACE is required"):
+        config_module.validate_queue_config()
