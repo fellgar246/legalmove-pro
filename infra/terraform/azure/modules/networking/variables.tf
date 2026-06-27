@@ -33,7 +33,7 @@ variable "postgres_subnet_cidr" {
 variable "container_apps_subnet_cidr" {
   type        = string
   description = "Subnet reserved for future Container Apps Environment (/23 recommended)."
-  default     = "10.30.21.0/23"
+  default     = "10.30.20.0/23"
 }
 
 variable "tags" {

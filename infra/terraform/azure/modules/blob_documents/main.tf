@@ -7,7 +7,9 @@ resource "azurerm_storage_account" "this" {
   min_tls_version          = "TLS1_2"
 
   allow_nested_items_to_be_public = false
-  shared_access_key_enabled       = false
+  # Terraform provider needs shared key access to read the blob data plane after create.
+  # Runtime API/worker use managed identity only (shared_access_key_enabled does not affect MI auth).
+  shared_access_key_enabled = true
 
   blob_properties {
     delete_retention_policy {
