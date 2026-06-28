@@ -53,6 +53,12 @@ resource "azurerm_postgresql_flexible_server" "this" {
   }
 
   tags = var.tags
+
+  lifecycle {
+    # Azure auto-assigns an availability zone when none is requested; it cannot be
+    # changed after creation without an HA standby swap. Ignore drift to keep applies idempotent.
+    ignore_changes = [zone]
+  }
 }
 
 resource "azurerm_postgresql_flexible_server_database" "this" {

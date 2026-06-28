@@ -176,7 +176,10 @@ module "postgres_flexible" {
 
   tags = local.common_tags
 
-  depends_on = [module.networking, module.key_vault]
+  depends_on = [
+    module.networking,
+    module.key_vault,
+  ]
 }
 
 module "container_apps_environment" {
