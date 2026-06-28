@@ -1,6 +1,6 @@
 # Terraform — Azure (active)
 
-> **Status: Block 4.G complete.** Shared Azure foundation, private PostgreSQL, Container Apps Environment, API/Worker Container Apps, and a manual migration job for dev/staging.
+> **Status: Milestone 4 closed (Block 4.H).** Shared Azure foundation, private PostgreSQL, Container Apps Environment, API/Worker Container Apps, migration job, and E2E QA documented for dev/staging.
 
 ## Layout
 
@@ -61,7 +61,7 @@ infra/terraform/azure/
 - Key Vault secret ref `DATABASE-URL` via API managed identity
 - Applies migrations `000001`–`000004` with `schema_migrations` ledger
 
-**Not yet:** Frontend hosting, full CI/CD, KEDA scaling, custom domain.
+**Not yet:** Frontend hosting, full CI/CD, KEDA scaling, custom domain. See [Milestone 4.H](../../../docs/milestone-4.h-cloud-e2e-closure.md) for closure checklist and limitations.
 
 ## Prerequisites
 
@@ -172,17 +172,19 @@ Configured automatically by Terraform. See [Milestone 4.F](../../docs/milestone-
 | `QUEUE_PROVIDER=azure_service_bus` | API + Worker env |
 | `DATABASE_URL` | Key Vault secret `DATABASE-URL` |
 | `OPENAI_API_KEY` | Key Vault secret `OPENAI-API-KEY` (worker, unless mock) |
+| `CORS_ALLOWED_ORIGINS` | API Container App env (default `http://localhost:3000`) |
 | `AZURE_CLIENT_ID` | Managed identity client ID outputs |
 
 ## Documentation
 
-- [Milestone 4.G — Cloud migrations + QA](../../docs/milestone-4.g-cloud-migrations-qa.md)
-- [Milestone 4.F — Container Apps deploy](../../docs/milestone-4.f-container-apps-deploy.md)
-- [Milestone 4.E — Azure adapters](../../docs/milestone-4.e-azure-adapters.md)
-- [Milestone 4.D — Container Apps Environment](../../docs/milestone-4.d-container-apps-environment.md)
-- [Milestone 4.C — PostgreSQL + networking](../../docs/milestone-4.c-azure-postgres-networking.md)
-- [Milestone 4.B — Azure Terraform foundation](../../docs/milestone-4.b-azure-foundation.md)
-- [Milestone 4.A — Azure migration plan](../../docs/milestone-4.a-azure-migration.md)
+- [Milestone 4.H — Cloud E2E closure](../../../docs/milestone-4.h-cloud-e2e-closure.md)
+- [Milestone 4.G — Cloud migrations + QA](../../../docs/milestone-4.g-cloud-migrations-qa.md)
+- [Milestone 4.F — Container Apps deploy](../../../docs/milestone-4.f-container-apps-deploy.md)
+- [Milestone 4.E — Azure adapters](../../../docs/milestone-4.e-azure-adapters.md)
+- [Milestone 4.D — Container Apps Environment](../../../docs/milestone-4.d-container-apps-environment.md)
+- [Milestone 4.C — PostgreSQL + networking](../../../docs/milestone-4.c-azure-postgres-networking.md)
+- [Milestone 4.B — Azure Terraform foundation](../../../docs/milestone-4.b-azure-foundation.md)
+- [Milestone 4.A — Azure migration plan](../../../docs/milestone-4.a-azure-migration.md)
 
 ## State
 

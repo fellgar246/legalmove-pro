@@ -131,6 +131,11 @@ resource "azurerm_container_app" "api" {
       }
 
       env {
+        name  = "CORS_ALLOWED_ORIGINS"
+        value = var.cors_allowed_origins
+      }
+
+      env {
         name        = "DATABASE_URL"
         secret_name = local.database_url_secret_ref_name
       }

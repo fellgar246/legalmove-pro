@@ -68,6 +68,7 @@ api_memory          = "1Gi"
 worker_cpu          = 1.0
 worker_memory       = "2Gi"
 api_port            = 8080
+# cors_allowed_origins = "http://localhost:3000,https://<future-frontend-domain>"
 worker_use_mock_result = false
 document_temp_dir      = "/tmp/legalmove-documents"
 pdf_max_bytes          = 20971520

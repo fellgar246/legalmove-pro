@@ -249,6 +249,7 @@ module "container_apps" {
   worker_memory = var.worker_memory
   api_port      = var.api_port
 
+  cors_allowed_origins                = var.cors_allowed_origins
   worker_use_mock_result              = var.worker_use_mock_result
   document_temp_dir                   = var.document_temp_dir
   pdf_max_bytes                       = var.pdf_max_bytes

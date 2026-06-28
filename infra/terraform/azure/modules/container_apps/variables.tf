@@ -174,6 +174,12 @@ variable "api_port" {
   default     = 8080
 }
 
+variable "cors_allowed_origins" {
+  type        = string
+  description = "Comma-separated browser origins allowed by the API CORS middleware."
+  default     = "http://localhost:3000"
+}
+
 variable "worker_use_mock_result" {
   type        = bool
   description = "When true, worker skips OPENAI-API-KEY secret reference."
