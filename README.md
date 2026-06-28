@@ -96,7 +96,7 @@ cd apps/web && npm run lint && npm run build
 
 ## Cloud infrastructure (Terraform)
 
-**Active provider: Azure** (Blocks 4.B–4.D foundation ready). AWS work from Blocks 4.1–4.3 is archived under `infra/terraform/aws/`.
+**Active provider: Azure** (Blocks 4.B–4.H complete). AWS work from Blocks 4.1–4.3 is archived under `infra/terraform/aws/`.
 
 ```bash
 az login
@@ -106,7 +106,7 @@ cd infra/terraform/azure/environments/dev
 terraform init && terraform validate && terraform plan
 ```
 
-See [Milestone 4.G — Cloud migrations + QA](docs/milestone-4.g-cloud-migrations-qa.md), [Milestone 4.F — Container Apps deploy](docs/milestone-4.f-container-apps-deploy.md), [Milestone 4.D — Container Apps Environment](docs/milestone-4.d-container-apps-environment.md), [Milestone 4.C — PostgreSQL + networking](docs/milestone-4.c-azure-postgres-networking.md), [Milestone 4.B — Azure foundation](docs/milestone-4.b-azure-foundation.md), and [Milestone 4.A — migration plan](docs/milestone-4.a-azure-migration.md).
+See [Milestone 4.H — Cloud E2E closure](docs/milestone-4.h-cloud-e2e-closure.md), [Milestone 4.G — Cloud migrations + QA](docs/milestone-4.g-cloud-migrations-qa.md), [Milestone 4.F — Container Apps deploy](docs/milestone-4.f-container-apps-deploy.md), [Milestone 4.D — Container Apps Environment](docs/milestone-4.d-container-apps-environment.md), [Milestone 4.C — PostgreSQL + networking](docs/milestone-4.c-azure-postgres-networking.md), [Milestone 4.B — Azure foundation](docs/milestone-4.b-azure-foundation.md), and [Milestone 4.A — migration plan](docs/milestone-4.a-azure-migration.md).
 
 Archived AWS docs: [4.1](docs/milestone-4.1-terraform-foundation.md), [4.2](docs/milestone-4.2-rds-networking.md), [4.3](docs/milestone-4.3-ecs-task-definitions.md).
 
@@ -114,6 +114,7 @@ Archived AWS docs: [4.1](docs/milestone-4.1-terraform-foundation.md), [4.2](docs
 
 - [Milestone 2.3 — PDF native + S3/SQS](docs/milestone-2.3-pdf-native.md) — full architecture and block history
 - [Milestone 3 — Frontend MVP](docs/milestone-3-frontend-mvp.md) — UI flows and local setup
+- [Milestone 4.H — Cloud E2E closure](docs/milestone-4.h-cloud-e2e-closure.md) — E2E QA, limitations, Milestone 4 closure (Block 4.H)
 - [Milestone 4.G — Cloud migrations + QA](docs/milestone-4.g-cloud-migrations-qa.md) — SQL migrations job + cloud E2E runbook (Block 4.G)
 - [Milestone 4.F — Container Apps deploy](docs/milestone-4.f-container-apps-deploy.md) — API + Worker on Azure (Block 4.F)
 - [Milestone 4.E — Azure adapters](docs/milestone-4.e-azure-adapters.md) — Blob + Service Bus Go/Python (Block 4.E)
@@ -134,7 +135,7 @@ Milestone 2.3 (Blocks 1–8) is **complete** for local and cloud-ready paths:
 - Postgres and SQS job queues
 - PostgreSQL remains source of truth
 
-**In progress:** Milestone 4 — Azure deployment.
+**Milestone 4 — Azure deployment (preliminary): closed.**
 
 - Block 4.A (AWS → Azure reorientation): architecture, archive AWS Terraform, roadmap — **done**
 - Block 4.B (Terraform Azure foundation): RG, ACR, Blob, Service Bus, Key Vault, managed identities — **done**
@@ -143,6 +144,8 @@ Milestone 2.3 (Blocks 1–8) is **complete** for local and cloud-ready paths:
 - Block 4.E (Azure adapters): Blob + Service Bus in Go/Python, DB migration — **done**
 - Block 4.F (Container Apps deploy): API + Worker on Azure — **done**
 - Block 4.G (Cloud migrations + QA): Container Apps Job for SQL schema, E2E runbook — **done**
-- Block 4.H (next): Frontend hosting
+- Block 4.H (Cloud E2E QA + closure): validation, CORS config, limitations, Milestone 4 sign-off — **done**
+
+**Next:** Milestone 5 — Frontend hosting + public demo (recommended). See [Milestone 4.H](docs/milestone-4.h-cloud-e2e-closure.md).
 
 Archived AWS blocks (reference only): 4.1 (ECR/S3/SQS), 4.2 (VPC/RDS), 4.3 (ECS task defs). Dockerfiles remain reusable for Azure Container Apps.

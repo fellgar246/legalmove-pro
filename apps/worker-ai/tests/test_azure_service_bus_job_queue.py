@@ -35,6 +35,32 @@ def test_azure_service_bus_job_queue_parses_valid_message_and_claims_job():
     claim.assert_called_once_with(conn, job_id)
 
 
+def _message_generator_body(body: str):
+    """Mimic azure-servicebus returning the AMQP data body as a byte-chunk generator."""
+    message = MagicMock()
+    encoded = body.encode("utf-8")
+    message.body = (chunk for chunk in (encoded[:5], encoded[5:]))
+    return message
+
+
+def test_azure_service_bus_job_queue_parses_generator_body_and_claims_job():
+    conn = MagicMock()
+    job_id = uuid.uuid4()
+    receiver = MagicMock()
+    receiver.receive_messages.return_value = [
+        _message_generator_body(f'{{"analysis_id":"{job_id}","schema_version":"1.0"}}')
+    ]
+
+    with patch.object(db, "get_job_status", return_value="QUEUED"):
+        with patch.object(db, "claim_analysis_job_by_id", return_value=True) as claim:
+            queue = AzureServiceBusJobQueue(conn, receiver=receiver)
+            claimed = queue.claim_next_job()
+
+    assert claimed is not None
+    assert claimed.analysis_id == str(job_id)
+    claim.assert_called_once_with(conn, job_id)
+
+
 def test_azure_service_bus_job_queue_completes_invalid_message():
     conn = MagicMock()
     receiver = MagicMock()

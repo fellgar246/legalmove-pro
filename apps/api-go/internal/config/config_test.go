@@ -127,6 +127,38 @@ func TestLoadAzureBlobRequiresStorageConfig(t *testing.T) {
 	}
 }
 
+func TestParseCORSAllowedOriginsDefaultsToLocalhost(t *testing.T) {
+	origins := ParseCORSAllowedOrigins("")
+	if len(origins) != 1 || origins[0] != "http://localhost:3000" {
+		t.Fatalf("ParseCORSAllowedOrigins(\"\") = %v", origins)
+	}
+}
+
+func TestParseCORSAllowedOriginsSplitsCommaSeparatedValues(t *testing.T) {
+	origins := ParseCORSAllowedOrigins("http://localhost:3000, https://app.example.com , ")
+	if len(origins) != 2 {
+		t.Fatalf("len(origins) = %d, want 2", len(origins))
+	}
+	if origins[0] != "http://localhost:3000" || origins[1] != "https://app.example.com" {
+		t.Fatalf("origins = %v", origins)
+	}
+}
+
+func TestLoadIncludesCORSAllowedOrigins(t *testing.T) {
+	setRequiredEnv(t)
+	t.Setenv("STORAGE_PROVIDER", "local")
+	t.Setenv("UPLOADS_DIR", t.TempDir())
+	t.Setenv("CORS_ALLOWED_ORIGINS", "http://localhost:3000,https://demo.legalmove.example")
+
+	cfg, err := Load()
+	if err != nil {
+		t.Fatalf("Load() error = %v", err)
+	}
+	if len(cfg.CORSAllowedOrigins) != 2 {
+		t.Fatalf("CORSAllowedOrigins = %v", cfg.CORSAllowedOrigins)
+	}
+}
+
 func TestLoadAzureServiceBusRequiresQueueConfig(t *testing.T) {
 	setRequiredEnv(t)
 	t.Setenv("STORAGE_PROVIDER", "local")

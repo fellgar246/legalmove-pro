@@ -75,11 +75,11 @@ func TestAzureBlobStorageSaveUploadMetadata(t *testing.T) {
 	if !strings.HasPrefix(capturedKey, "documents/amendment/2026/06/") {
 		t.Fatalf("unexpected captured key: %q", capturedKey)
 	}
-	if capturedMetadata["original-filename"] != "contract.pdf" {
-		t.Fatalf("metadata original-filename = %q", capturedMetadata["original-filename"])
+	if capturedMetadata["original_filename"] != "contract.pdf" {
+		t.Fatalf("metadata original_filename = %q", capturedMetadata["original_filename"])
 	}
-	if capturedMetadata["document-kind"] != "amendment" {
-		t.Fatalf("metadata document-kind = %q", capturedMetadata["document-kind"])
+	if capturedMetadata["document_kind"] != "amendment" {
+		t.Fatalf("metadata document_kind = %q", capturedMetadata["document_kind"])
 	}
 	if capturedContentType != "application/pdf" {
 		t.Fatalf("content type = %q", capturedContentType)

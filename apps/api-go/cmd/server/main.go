@@ -114,7 +114,7 @@ func main() {
 	router := httpserver.NewRouter(httpserver.Handlers{
 		Documents: docHandler,
 		Analyses:  analysisHandler,
-	})
+	}, cfg.CORSAllowedOrigins)
 	addr := fmt.Sprintf(":%d", cfg.APIPort)
 
 	switch cfg.StorageProvider {

@@ -12,9 +12,10 @@ import (
 )
 
 type Config struct {
-	AppEnv          string
-	APIPort         int
-	DatabaseURL     string
+	AppEnv             string
+	APIPort            int
+	CORSAllowedOrigins []string
+	DatabaseURL        string
 	UploadsDir      string
 	StorageProvider storage.StorageProvider
 	QueueProvider   queue.QueueProvider
@@ -52,8 +53,9 @@ func Load() (Config, error) {
 	}
 
 	cfg := Config{
-		AppEnv:                    os.Getenv("APP_ENV"),
-		DatabaseURL:               os.Getenv("DATABASE_URL"),
+		AppEnv:             os.Getenv("APP_ENV"),
+		CORSAllowedOrigins: ParseCORSAllowedOrigins(os.Getenv("CORS_ALLOWED_ORIGINS")),
+		DatabaseURL:        os.Getenv("DATABASE_URL"),
 		UploadsDir:                os.Getenv("UPLOADS_DIR"),
 		StorageProvider:           storageProvider,
 		QueueProvider:             queueProvider,
@@ -136,4 +138,27 @@ func Load() (Config, error) {
 	}
 
 	return cfg, nil
+}
+
+// ParseCORSAllowedOrigins reads a comma-separated list of browser origins.
+// Defaults to the local Next.js dev server when unset or empty.
+func ParseCORSAllowedOrigins(raw string) []string {
+	const defaultOrigin = "http://localhost:3000"
+
+	if strings.TrimSpace(raw) == "" {
+		return []string{defaultOrigin}
+	}
+
+	parts := strings.Split(raw, ",")
+	origins := make([]string, 0, len(parts))
+	for _, part := range parts {
+		origin := strings.TrimSpace(part)
+		if origin != "" {
+			origins = append(origins, origin)
+		}
+	}
+	if len(origins) == 0 {
+		return []string{defaultOrigin}
+	}
+	return origins
 }

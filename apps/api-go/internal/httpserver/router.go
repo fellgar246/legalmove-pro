@@ -19,9 +19,9 @@ type Handlers struct {
 	Analyses  *analyses.Handler
 }
 
-func NewRouter(h Handlers) http.Handler {
+func NewRouter(h Handlers, corsAllowedOrigins []string) http.Handler {
 	r := chi.NewRouter()
-	r.Use(CORSMiddleware("http://localhost:3000"))
+	r.Use(CORSMiddleware(corsAllowedOrigins))
 
 	r.Get("/health", func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")

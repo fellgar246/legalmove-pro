@@ -59,12 +59,13 @@ func (s *AzureBlobStorageService) Save(ctx context.Context, input SaveObjectInpu
 		contentType = "application/octet-stream"
 	}
 
+	// Azure Blob metadata names must be valid C# identifiers (no hyphens).
 	metadata := map[string]string{
-		"original-filename": input.OriginalName,
-		"document-kind":     normalizeDocumentKind(input.DocumentKind),
+		"original_filename": input.OriginalName,
+		"document_kind":     normalizeDocumentKind(input.DocumentKind),
 	}
 	if input.SizeBytes > 0 {
-		metadata["size-bytes"] = fmt.Sprintf("%d", input.SizeBytes)
+		metadata["size_bytes"] = fmt.Sprintf("%d", input.SizeBytes)
 	}
 
 	if err := s.client.UploadBlob(ctx, s.containerName, objectKey, input.Reader, contentType, metadata); err != nil {

@@ -147,7 +147,20 @@ class AzureServiceBusJobQueue(JobQueue):
             return raw.decode("utf-8")
         if isinstance(raw, str):
             return raw
-        return str(raw)
+        # azure-servicebus returns a generator of byte chunks for AMQP data bodies.
+        try:
+            chunks = list(raw)
+        except TypeError:
+            return str(raw)
+        parts: list[bytes] = []
+        for chunk in chunks:
+            if isinstance(chunk, bytes):
+                parts.append(chunk)
+            elif isinstance(chunk, str):
+                parts.append(chunk.encode("utf-8"))
+            else:
+                parts.append(str(chunk).encode("utf-8"))
+        return b"".join(parts).decode("utf-8")
 
     def _complete_message_from_job(self, job: ClaimedAnalysisJob) -> None:
         metadata = job.metadata or {}
