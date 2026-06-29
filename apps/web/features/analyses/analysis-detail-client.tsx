@@ -2,6 +2,7 @@
 
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
+import { useParams } from 'next/navigation';
 import { ArrowLeft, RefreshCw } from 'lucide-react';
 import { StatusBadge } from '@/components/status-badge';
 import { LoadingState } from '@/components/loading-state';
@@ -23,10 +24,6 @@ import type { AnalysisJob, AnalysisResultResponse, AnalysisStatus, AnalysisViewM
 
 const POLL_INTERVAL_MS = 3000;
 
-interface AnalysisDetailClientProps {
-  analysisId: string;
-}
-
 function shortId(id: string): string {
   return id.substring(0, 8);
 }
@@ -39,7 +36,8 @@ function isTerminal(status: AnalysisStatus): boolean {
   return status === 'COMPLETED' || status === 'FAILED' || status === 'NEEDS_REVIEW';
 }
 
-export const AnalysisDetailClient: React.FC<AnalysisDetailClientProps> = ({ analysisId }) => {
+export const AnalysisDetailClient: React.FC = () => {
+  const { id: analysisId } = useParams<{ id: string }>();
   const [job, setJob] = useState<AnalysisJob | null>(null);
   const [viewModel, setViewModel] = useState<AnalysisViewModel | null>(null);
   const [rawResult, setRawResult] = useState<AnalysisResultResponse | null>(null);

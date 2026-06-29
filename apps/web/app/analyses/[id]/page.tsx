@@ -1,11 +1,9 @@
 import { AnalysisDetailClient } from '@/features/analyses/analysis-detail-client';
 
-interface AnalysisDetailPageProps {
-  params: {
-    id: string;
-  };
+export function generateStaticParams() {
+  return [{ id: '_' }];
 }
 
-export default function AnalysisDetailPage({ params }: AnalysisDetailPageProps) {
-  return <AnalysisDetailClient analysisId={params.id} />;
+export default function AnalysisDetailPage() {
+  return <AnalysisDetailClient />;
 }

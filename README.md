@@ -10,7 +10,17 @@ AI-assisted contract amendment review: compare an original agreement with an ame
 | Python Worker | `apps/worker-ai` | Poll queue, materialize documents, run AI pipeline |
 | Next.js Frontend | `apps/web` | Upload UI, job polling, result view |
 
-PostgreSQL is the **source of truth** for jobs, documents, results, and statuses. Cloud storage and queues are optional extensions (local defaults below; Azure planned for deployment).
+PostgreSQL is the **source of truth** for jobs, documents, results, and statuses. Cloud storage and queues are optional extensions (local defaults below; Azure is the active deployment target).
+
+## Public demo (Azure)
+
+| Resource | URL |
+|----------|-----|
+| Frontend | `terraform output -raw frontend_static_web_app_url` (Azure Static Web Apps) |
+| API | `terraform output -raw api_container_app_url` (Azure Container Apps) |
+
+Run `terraform output` from `infra/terraform/azure/environments/dev` to get the live URLs.
+See [Milestone 5.2 — Frontend public deploy](docs/milestone-5.2-frontend-public-deploy.md) for the deployment runbook.
 
 ## Quick start (local)
 
@@ -114,6 +124,8 @@ Archived AWS docs: [4.1](docs/milestone-4.1-terraform-foundation.md), [4.2](docs
 
 - [Milestone 2.3 — PDF native + S3/SQS](docs/milestone-2.3-pdf-native.md) — full architecture and block history
 - [Milestone 3 — Frontend MVP](docs/milestone-3-frontend-mvp.md) — UI flows and local setup
+- [Milestone 5.2 — Frontend public deploy](docs/milestone-5.2-frontend-public-deploy.md) — GitHub Actions CI/CD, static export, CORS, deployment runbook (Block 5.2)
+- [Milestone 5.1 — Azure Static Web Apps strategy](docs/milestone-5.1-azure-static-web-apps-strategy.md) — SWA strategy, Next.js compat, Terraform module, deploy runbook (Block 5.1)
 - [Milestone 4.H — Cloud E2E closure](docs/milestone-4.h-cloud-e2e-closure.md) — E2E QA, limitations, Milestone 4 closure (Block 4.H)
 - [Milestone 4.G — Cloud migrations + QA](docs/milestone-4.g-cloud-migrations-qa.md) — SQL migrations job + cloud E2E runbook (Block 4.G)
 - [Milestone 4.F — Container Apps deploy](docs/milestone-4.f-container-apps-deploy.md) — API + Worker on Azure (Block 4.F)
@@ -146,6 +158,9 @@ Milestone 2.3 (Blocks 1–8) is **complete** for local and cloud-ready paths:
 - Block 4.G (Cloud migrations + QA): Container Apps Job for SQL schema, E2E runbook — **done**
 - Block 4.H (Cloud E2E QA + closure): validation, CORS config, limitations, Milestone 4 sign-off — **done**
 
-**Next:** Milestone 5 — Frontend hosting + public demo (recommended). See [Milestone 4.H](docs/milestone-4.h-cloud-e2e-closure.md).
+**Milestone 5 — Frontend hosting + public demo: in progress.**
+
+- Block 5.1 (Azure Static Web Apps strategy + Terraform module): **done** — see [Milestone 5.1](docs/milestone-5.1-azure-static-web-apps-strategy.md)
+- Block 5.2 (GitHub Actions CI/CD + static export + public deploy): **done** — see [Milestone 5.2](docs/milestone-5.2-frontend-public-deploy.md)
 
 Archived AWS blocks (reference only): 4.1 (ECR/S3/SQS), 4.2 (VPC/RDS), 4.3 (ECS task defs). Dockerfiles remain reusable for Azure Container Apps.
