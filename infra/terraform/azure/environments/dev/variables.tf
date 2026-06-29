@@ -447,3 +447,27 @@ variable "migration_direction" {
   description = "Default MIGRATION_DIRECTION for the migration job (up or down)."
   default     = "up"
 }
+
+variable "create_frontend_static_web_app" {
+  type        = bool
+  description = "Create the Azure Static Web App resource for the Next.js frontend (Block 5.1)."
+  default     = true
+}
+
+variable "frontend_static_web_app_name" {
+  type        = string
+  description = "Optional Static Web App name override (2-60 alphanumeric/hyphen, globally unique). Defaults to swa-lmpro-<env>-<suffix>."
+  default     = null
+}
+
+variable "frontend_static_web_app_sku_tier" {
+  type        = string
+  description = "Static Web App SKU tier (Free or Standard)."
+  default     = "Free"
+}
+
+variable "frontend_static_web_app_sku_size" {
+  type        = string
+  description = "Static Web App SKU size (Free or Standard)."
+  default     = "Free"
+}

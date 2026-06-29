@@ -68,7 +68,8 @@ api_memory          = "1Gi"
 worker_cpu          = 1.0
 worker_memory       = "2Gi"
 api_port            = 8080
-# cors_allowed_origins = "http://localhost:3000,https://<future-frontend-domain>"
+# After Block 5.1 terraform apply, append the SWA hostname (no image rebuild needed):
+# cors_allowed_origins = "http://localhost:3000,https://<swa-hostname>.azurestaticapps.net"
 worker_use_mock_result = false
 document_temp_dir      = "/tmp/legalmove-documents"
 pdf_max_bytes          = 20971520
@@ -83,3 +84,11 @@ create_migration_job = true
 # migration_image_tag  = "latest"
 # migration_replica_timeout_in_seconds = 300
 # migration_direction  = "up"
+
+# --- Block 5.1: Frontend — Azure Static Web Apps ---
+# Run `terraform apply` to provision the SWA resource and obtain its hostname.
+# Then update cors_allowed_origins above with the real SWA hostname and re-apply.
+create_frontend_static_web_app   = true
+# frontend_static_web_app_name   = "swa-lmpro-dev-xxxx"  # auto-generated if omitted
+frontend_static_web_app_sku_tier = "Free"
+frontend_static_web_app_sku_size = "Free"

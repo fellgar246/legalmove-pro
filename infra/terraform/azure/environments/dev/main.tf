@@ -52,6 +52,12 @@ locals {
 
   deploy_container_apps = var.create_container_apps && var.create_container_apps_environment && var.create_managed_identities
   deploy_migration_job  = local.deploy_container_apps && var.create_migration_job
+
+  # Static Web App: 2-60 alphanumeric/hyphen, globally unique.
+  static_web_app_name = coalesce(
+    var.frontend_static_web_app_name,
+    "swa-lmpro-${var.environment}-${local.name_suffix}",
+  )
 }
 
 module "resource_group" {
@@ -274,4 +280,17 @@ module "container_apps" {
     module.managed_identities,
     module.postgres_flexible,
   ]
+}
+
+# --- Block 5.1: Frontend — Azure Static Web Apps ---
+module "static_web_app" {
+  source = "../../modules/static_web_app"
+  count  = var.create_frontend_static_web_app ? 1 : 0
+
+  name                = local.static_web_app_name
+  resource_group_name = module.resource_group.name
+  location            = module.resource_group.location
+  sku_tier            = var.frontend_static_web_app_sku_tier
+  sku_size            = var.frontend_static_web_app_sku_size
+  tags                = local.common_tags
 }

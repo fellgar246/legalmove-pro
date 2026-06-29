@@ -1,6 +1,6 @@
 # Terraform — Azure (active)
 
-> **Status: Milestone 4 closed (Block 4.H).** Shared Azure foundation, private PostgreSQL, Container Apps Environment, API/Worker Container Apps, migration job, and E2E QA documented for dev/staging.
+> **Status: Milestone 5 in progress (Block 5.1 done).** Shared Azure foundation, private PostgreSQL, Container Apps Environment, API/Worker Container Apps, migration job, E2E QA (Milestone 4 closed); Azure Static Web Apps Terraform module prepared for frontend public demo (Block 5.1).
 
 ## Layout
 
@@ -16,7 +16,8 @@ infra/terraform/azure/
 │   ├── networking/                  # Block 4.C (+ subnet delegation in 4.D)
 │   ├── postgres_flexible/           # Block 4.C
 │   ├── container_apps_environment/  # Block 4.D
-│   └── container_apps/              # Block 4.F + migration job (4.G)
+│   ├── container_apps/              # Block 4.F + migration job (4.G)
+│   └── static_web_app/              # Block 5.1 — frontend public demo
 └── environments/
     └── dev/
         ├── main.tf
@@ -61,7 +62,17 @@ infra/terraform/azure/
 - Key Vault secret ref `DATABASE-URL` via API managed identity
 - Applies migrations `000001`–`000004` with `schema_migrations` ledger
 
-**Not yet:** Frontend hosting, full CI/CD, KEDA scaling, custom domain. See [Milestone 4.H](../../../docs/milestone-4.h-cloud-e2e-closure.md) for closure checklist and limitations.
+## Block 5.1 scope
+
+- `modules/static_web_app/` — single `azurerm_static_web_app` resource (Free SKU default, `centralus`)
+- Gated in `environments/dev` via `create_frontend_static_web_app` (default `true`)
+- Outputs: `frontend_static_web_app_name`, `frontend_static_web_app_id`, `frontend_static_web_app_default_hostname`, `frontend_static_web_app_url`
+- Deployment token (`api_key`) is in Terraform state but **not surfaced as an output** — fetch at deploy time: `az staticwebapp secrets list --name <name> --query "properties.apiKey" -o tsv`
+- CORS: after `terraform apply`, set `cors_allowed_origins = "http://localhost:3000,https://<swa-hostname>"` in `terraform.tfvars` and re-apply. **No image rebuild needed** — changing the env var creates a new API revision.
+
+See [Milestone 5.1 — Azure Static Web Apps strategy](../../../docs/milestone-5.1-azure-static-web-apps-strategy.md) for full runbook.
+
+**Not yet:** custom domain, auth, full CI/CD, KEDA scaling. See [Milestone 4.H](../../../docs/milestone-4.h-cloud-e2e-closure.md) for Milestone 4 closure checklist.
 
 ## Prerequisites
 
@@ -177,6 +188,7 @@ Configured automatically by Terraform. See [Milestone 4.F](../../docs/milestone-
 
 ## Documentation
 
+- [Milestone 5.1 — Azure Static Web Apps strategy](../../../docs/milestone-5.1-azure-static-web-apps-strategy.md)
 - [Milestone 4.H — Cloud E2E closure](../../../docs/milestone-4.h-cloud-e2e-closure.md)
 - [Milestone 4.G — Cloud migrations + QA](../../../docs/milestone-4.g-cloud-migrations-qa.md)
 - [Milestone 4.F — Container Apps deploy](../../../docs/milestone-4.f-container-apps-deploy.md)

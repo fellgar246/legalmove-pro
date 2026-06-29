@@ -241,3 +241,25 @@ output "migration_image" {
   description = "Full ACR image reference for the migration job (null if create_migration_job=false or Container Apps not deployed)."
   value       = local.deploy_migration_job ? module.container_apps[0].migration_image : null
 }
+
+# --- Block 5.1: Frontend — Azure Static Web Apps ---
+
+output "frontend_static_web_app_name" {
+  description = "Static Web App name (null if create_frontend_static_web_app=false)."
+  value       = var.create_frontend_static_web_app ? module.static_web_app[0].name : null
+}
+
+output "frontend_static_web_app_id" {
+  description = "Static Web App resource ID (null if create_frontend_static_web_app=false)."
+  value       = var.create_frontend_static_web_app ? module.static_web_app[0].id : null
+}
+
+output "frontend_static_web_app_default_hostname" {
+  description = "Auto-generated hostname for the Static Web App, e.g. nice-meadow-xxx.azurestaticapps.net (null if create_frontend_static_web_app=false)."
+  value       = var.create_frontend_static_web_app ? module.static_web_app[0].default_host_name : null
+}
+
+output "frontend_static_web_app_url" {
+  description = "Public HTTPS URL for the frontend Static Web App (null if create_frontend_static_web_app=false)."
+  value       = var.create_frontend_static_web_app ? module.static_web_app[0].url : null
+}
