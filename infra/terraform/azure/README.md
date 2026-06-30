@@ -1,6 +1,6 @@
 # Terraform — Azure (active)
 
-> **Status: Milestone 5 in progress (Block 5.1 done).** Shared Azure foundation, private PostgreSQL, Container Apps Environment, API/Worker Container Apps, migration job, E2E QA (Milestone 4 closed); Azure Static Web Apps Terraform module prepared for frontend public demo (Block 5.1).
+> **Status: Milestone 5 in progress (Blocks 5.1–5.3 done).** Shared Azure foundation, private PostgreSQL, Container Apps Environment, API/Worker Container Apps, migration job, E2E QA (Milestone 4 closed); Azure Static Web App **provisioned and deployed** with CORS allowing the public host, full public-demo QA complete (Block 5.3). Live frontend: `https://witty-bush-05c2c6e10.7.azurestaticapps.net`.
 
 ## Layout
 
@@ -68,9 +68,9 @@ infra/terraform/azure/
 - Gated in `environments/dev` via `create_frontend_static_web_app` (default `true`)
 - Outputs: `frontend_static_web_app_name`, `frontend_static_web_app_id`, `frontend_static_web_app_default_hostname`, `frontend_static_web_app_url`
 - Deployment token (`api_key`) is in Terraform state but **not surfaced as an output** — fetch at deploy time: `az staticwebapp secrets list --name <name> --query "properties.apiKey" -o tsv`
-- CORS: after `terraform apply`, set `cors_allowed_origins = "http://localhost:3000,https://<swa-hostname>"` in `terraform.tfvars` and re-apply. **No image rebuild needed** — changing the env var creates a new API revision.
+- CORS: after `terraform apply`, set `cors_allowed_origins = "http://localhost:3000,https://<swa-hostname>"` in `terraform.tfvars` and re-apply. Changing the env var creates a new API revision (no image rebuild for the env var itself). **Caveat (found in 5.3):** the running `api-go` image must contain the multi-origin CORS middleware (`internal/httpserver/cors.go`). If the `OPTIONS` preflight returns a fixed origin instead of echoing the requesting origin, the deployed image is stale — rebuild + push `api-go:latest` and roll the API with a unique `--revision-suffix`.
 
-See [Milestone 5.1 — Azure Static Web Apps strategy](../../../docs/milestone-5.1-azure-static-web-apps-strategy.md) for full runbook.
+See [Milestone 5.1 — Azure Static Web Apps strategy](../../../docs/milestone-5.1-azure-static-web-apps-strategy.md) for the strategy and [Milestone 5.3 — Public demo QA](../../../docs/milestone-5.3-public-demo-qa.md) for the provisioning/deploy + QA runbook.
 
 **Not yet:** custom domain, auth, full CI/CD, KEDA scaling. See [Milestone 4.H](../../../docs/milestone-4.h-cloud-e2e-closure.md) for Milestone 4 closure checklist.
 
@@ -188,6 +188,8 @@ Configured automatically by Terraform. See [Milestone 4.F](../../docs/milestone-
 
 ## Documentation
 
+- [Milestone 5.3 — Public demo QA](../../../docs/milestone-5.3-public-demo-qa.md)
+- [Milestone 5.2 — Frontend public deploy](../../../docs/milestone-5.2-frontend-public-deploy.md)
 - [Milestone 5.1 — Azure Static Web Apps strategy](../../../docs/milestone-5.1-azure-static-web-apps-strategy.md)
 - [Milestone 4.H — Cloud E2E closure](../../../docs/milestone-4.h-cloud-e2e-closure.md)
 - [Milestone 4.G — Cloud migrations + QA](../../../docs/milestone-4.g-cloud-migrations-qa.md)

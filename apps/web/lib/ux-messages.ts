@@ -10,7 +10,7 @@ export const UX_MESSAGES = {
   },
   error: {
     apiOffline:
-      'Unable to reach the API. Make sure the backend is running at localhost:8080 and CORS allows this app.',
+      'Unable to reach the analysis API right now. Please check your connection and try again in a moment.',
     uploadFailed: 'Upload failed. Check your files and try again.',
     createAnalysisFailed:
       'Could not start the AI-assisted analysis. Please try again.',

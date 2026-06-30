@@ -16,11 +16,16 @@ PostgreSQL is the **source of truth** for jobs, documents, results, and statuses
 
 | Resource | URL |
 |----------|-----|
-| Frontend | `terraform output -raw frontend_static_web_app_url` (Azure Static Web Apps) |
-| API | `terraform output -raw api_container_app_url` (Azure Container Apps) |
+| Frontend | https://witty-bush-05c2c6e10.7.azurestaticapps.net (Azure Static Web Apps) |
+| API | https://ca-api-legalmove-pro-dev.proudbeach-112d6306.centralus.azurecontainerapps.io (Azure Container Apps) |
 
-Run `terraform output` from `infra/terraform/azure/environments/dev` to get the live URLs.
-See [Milestone 5.2 — Frontend public deploy](docs/milestone-5.2-frontend-public-deploy.md) for the deployment runbook.
+Re-derive the live URLs with `terraform output -raw frontend_static_web_app_url` /
+`terraform output -raw api_container_app_url` from `infra/terraform/azure/environments/dev`.
+The worker runs in **mock mode** for the demo (synthetic results, no OpenAI spend).
+See [Milestone 5.3 — Public demo QA](docs/milestone-5.3-public-demo-qa.md) for the QA
+evidence, demo instructions, and troubleshooting, and
+[Milestone 5.2 — Frontend public deploy](docs/milestone-5.2-frontend-public-deploy.md) for
+the deployment runbook.
 
 ## Quick start (local)
 
@@ -124,6 +129,7 @@ Archived AWS docs: [4.1](docs/milestone-4.1-terraform-foundation.md), [4.2](docs
 
 - [Milestone 2.3 — PDF native + S3/SQS](docs/milestone-2.3-pdf-native.md) — full architecture and block history
 - [Milestone 3 — Frontend MVP](docs/milestone-3-frontend-mvp.md) — UI flows and local setup
+- [Milestone 5.3 — Public demo QA](docs/milestone-5.3-public-demo-qa.md) — provision + deploy SWA, full public-demo QA, polish, troubleshooting (Block 5.3)
 - [Milestone 5.2 — Frontend public deploy](docs/milestone-5.2-frontend-public-deploy.md) — GitHub Actions CI/CD, static export, CORS, deployment runbook (Block 5.2)
 - [Milestone 5.1 — Azure Static Web Apps strategy](docs/milestone-5.1-azure-static-web-apps-strategy.md) — SWA strategy, Next.js compat, Terraform module, deploy runbook (Block 5.1)
 - [Milestone 4.H — Cloud E2E closure](docs/milestone-4.h-cloud-e2e-closure.md) — E2E QA, limitations, Milestone 4 closure (Block 4.H)
@@ -162,5 +168,6 @@ Milestone 2.3 (Blocks 1–8) is **complete** for local and cloud-ready paths:
 
 - Block 5.1 (Azure Static Web Apps strategy + Terraform module): **done** — see [Milestone 5.1](docs/milestone-5.1-azure-static-web-apps-strategy.md)
 - Block 5.2 (GitHub Actions CI/CD + static export + public deploy): **done** — see [Milestone 5.2](docs/milestone-5.2-frontend-public-deploy.md)
+- Block 5.3 (public demo QA + polish): **done** — SWA provisioned + deployed, full E2E QA, CORS image fix, light copy polish — see [Milestone 5.3](docs/milestone-5.3-public-demo-qa.md)
 
 Archived AWS blocks (reference only): 4.1 (ECR/S3/SQS), 4.2 (VPC/RDS), 4.3 (ECS task defs). Dockerfiles remain reusable for Azure Container Apps.
