@@ -1,6 +1,6 @@
 # Terraform — Azure (active)
 
-> **Status: Milestone 5 in progress (Blocks 5.1–5.3 done).** Shared Azure foundation, private PostgreSQL, Container Apps Environment, API/Worker Container Apps, migration job, E2E QA (Milestone 4 closed); Azure Static Web App **provisioned and deployed** with CORS allowing the public host, full public-demo QA complete (Block 5.3). Live frontend: `https://witty-bush-05c2c6e10.7.azurestaticapps.net`.
+> **Status: Milestone 5 closed (Blocks 5.1–5.4 done).** Shared Azure foundation, private PostgreSQL, Container Apps Environment, API/Worker Container Apps, migration job, E2E QA (Milestone 4 closed); Azure Static Web App **provisioned and deployed** with CORS allowing the public host, full public-demo QA complete (Block 5.3), demo package + portfolio documentation complete (Block 5.4). Live frontend: `https://witty-bush-05c2c6e10.7.azurestaticapps.net`.
 
 ## Layout
 
@@ -166,12 +166,63 @@ az keyvault secret set \
   --value "<secret>"
 ```
 
-## Destroy dev resources
+## Cost controls & teardown
+
+See [Milestone 5.4 — Demo package](../../../docs/milestone-5.4-demo-package.md) for the full
+portfolio write-up; this section is the operational reference.
+
+### Replica / SKU limits driving cost
+
+| Resource | Setting | Value |
+|---|---|---|
+| API Container App | `api_min_replicas` / `api_max_replicas` | 1 / 2, 0.5 vCPU / 1Gi |
+| Worker Container App | `worker_min_replicas` / `worker_max_replicas` | 1 / 1 (fixed), 1 vCPU / 2Gi |
+| PostgreSQL | `postgres_sku_name` | `B_Standard_B1ms` (burstable), no HA (`postgres_high_availability_enabled = false`) |
+| Storage | `storage_replication_type` | `LRS`, 90-day blob lifecycle expiry |
+| Service Bus | `servicebus_sku` | `Standard` |
+| Key Vault | `key_vault_sku_name` | `standard`, soft-delete only, purge protection off (dev) |
+| ACR | `acr_sku` | `Basic` |
+| Static Web App | `frontend_static_web_app_sku_tier/size` | `Free` |
+| Log Analytics | `log_analytics_retention_days` | 30 |
+
+### Mock mode (avoid OpenAI spend)
+
+```hcl
+worker_use_mock_result = true
+```
+
+Skips the `OPENAI-API-KEY` Key Vault reference entirely and returns a synthetic but
+schema-complete `FinalAnalysisReport` v1. This is the setting used on the public demo.
+
+### Disable individual resource groups (feature flags)
+
+Each major block is independently gated in `environments/dev/variables.tf`. Set to `false` and
+`terraform apply` to tear down just that layer (respect the dependency order — later blocks
+depend on earlier ones):
+
+```hcl
+create_frontend_static_web_app     = false  # Block 5.1 — Static Web App
+create_migration_job               = false  # Block 4.G — migration job
+create_container_apps              = false  # Block 4.F — API + Worker Container Apps
+create_container_apps_environment  = false  # Block 4.D — CAE + Log Analytics
+create_managed_identities          = false  # Block 4.B — managed identities
+```
+
+To pause the frontend GitHub Actions deploy without touching infrastructure, disable the
+workflow from **GitHub → Actions → Deploy – Azure Static Web Apps → ⋯ → Disable workflow**, or
+remove the `NEXT_PUBLIC_API_BASE_URL` repository variable so the build fails closed.
+
+### Destroy dev resources
 
 ```bash
 cd infra/terraform/azure/environments/dev
 terraform destroy
 ```
+
+> **⚠️ Warning:** this deletes every resource in `rg-legalmove-pro-dev`, including the **live
+> public demo** (frontend, API, worker, database, and all uploaded documents/results). Only run
+> this when the demo is intentionally being retired — there is no automatic backup path for
+> dev-tier resources (`postgres_high_availability_enabled = false`, no geo-redundant storage).
 
 ## Application env mapping (Container Apps — Block 4.F)
 
@@ -188,6 +239,9 @@ Configured automatically by Terraform. See [Milestone 4.F](../../docs/milestone-
 
 ## Documentation
 
+- [`docs/architecture-azure.md`](../../../docs/architecture-azure.md)
+- [`docs/demo-runbook.md`](../../../docs/demo-runbook.md)
+- [Milestone 5.4 — Demo package + portfolio docs](../../../docs/milestone-5.4-demo-package.md)
 - [Milestone 5.3 — Public demo QA](../../../docs/milestone-5.3-public-demo-qa.md)
 - [Milestone 5.2 — Frontend public deploy](../../../docs/milestone-5.2-frontend-public-deploy.md)
 - [Milestone 5.1 — Azure Static Web Apps strategy](../../../docs/milestone-5.1-azure-static-web-apps-strategy.md)

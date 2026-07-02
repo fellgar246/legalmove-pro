@@ -1,4 +1,14 @@
 {
+  "routes": [
+    {
+      "route": "/analyses/new",
+      "rewrite": "/analyses/new.html"
+    },
+    {
+      "route": "/analyses/*",
+      "rewrite": "/analyses/_.html"
+    }
+  ],
   "navigationFallback": {
     "rewrite": "/index.html",
     "exclude": [

@@ -2,15 +2,7 @@
 
 AI-assisted contract amendment review: compare an original agreement with an amendment and surface structured changes, risks, and human-review recommendations.
 
-## Stack
-
-| Component | Path | Role |
-|-----------|------|------|
-| Go API | `apps/api-go` | Upload documents, create analysis jobs, serve results |
-| Python Worker | `apps/worker-ai` | Poll queue, materialize documents, run AI pipeline |
-| Next.js Frontend | `apps/web` | Upload UI, job polling, result view |
-
-PostgreSQL is the **source of truth** for jobs, documents, results, and statuses. Cloud storage and queues are optional extensions (local defaults below; Azure is the active deployment target).
+> **AI-generated review support. Not legal advice. All outputs should be reviewed by a qualified human.**
 
 ## Public demo (Azure)
 
@@ -21,11 +13,67 @@ PostgreSQL is the **source of truth** for jobs, documents, results, and statuses
 
 Re-derive the live URLs with `terraform output -raw frontend_static_web_app_url` /
 `terraform output -raw api_container_app_url` from `infra/terraform/azure/environments/dev`.
-The worker runs in **mock mode** for the demo (synthetic results, no OpenAI spend).
-See [Milestone 5.3 — Public demo QA](docs/milestone-5.3-public-demo-qa.md) for the QA
-evidence, demo instructions, and troubleshooting, and
-[Milestone 5.2 — Frontend public deploy](docs/milestone-5.2-frontend-public-deploy.md) for
-the deployment runbook.
+The worker runs in **mock mode** for the demo (synthetic results, no OpenAI spend) — see
+[Demo mode](#demo-mode-mock-vs-real-openai) below.
+
+- **Try it**: open the frontend, upload an original contract + amendment PDF, watch it go
+  `PROCESSING → COMPLETED`, and review the structured result. Full walkthrough, checklist, and
+  troubleshooting: [`docs/demo-runbook.md`](docs/demo-runbook.md).
+- **How it's built**: [`docs/architecture-azure.md`](docs/architecture-azure.md) (diagram, resource
+  inventory, API routes).
+- **QA evidence**: [Milestone 5.3 — Public demo QA](docs/milestone-5.3-public-demo-qa.md).
+- **Portfolio summary + known limitations**: [`docs/milestone-5.4-demo-package.md`](docs/milestone-5.4-demo-package.md).
+
+## Architecture overview
+
+```mermaid
+flowchart LR
+    User(("Visitor")) --> SWA["Azure Static Web Apps\n(Next.js static export)"]
+    SWA -- "REST / CORS" --> API["Azure Container Apps\nGo API"]
+    API --> Blob[("Azure Blob Storage\ndocuments")]
+    API --> SB[["Azure Service Bus\nanalysis-jobs queue"]]
+    API --> PG[("Azure PostgreSQL\nFlexible Server\n(private VNet)")]
+    Worker["Azure Container Apps\nPython AI Worker"] -- polls --> SB
+    Worker --> Blob
+    Worker --> PG
+    Worker -. "mock or real" .-> OpenAI(["OpenAI API"])
+    API -. "AcrPull" .-> ACR[["Azure Container Registry"]]
+    Worker -. "AcrPull" .-> ACR
+    KV["Azure Key Vault\nDATABASE-URL / OPENAI-API-KEY"] --> API
+    KV --> Worker
+    MI[/"Managed Identities + RBAC"/] -.-> API
+    MI -.-> Worker
+```
+
+Full diagram, resource inventory, and env-var/secret contract:
+[`docs/architecture-azure.md`](docs/architecture-azure.md).
+
+**Tech stack**: Go API (chi router) · Python AI worker (OpenAI pipeline) · Next.js frontend
+(static export) · PostgreSQL · Azure Container Apps · Azure Static Web Apps · Azure Blob
+Storage · Azure Service Bus · Azure Key Vault · Azure Container Registry · Managed
+Identity/RBAC.
+
+## Main features
+
+- Upload an **original contract** + its **amendment** (PDF or image).
+- AI-assisted review: a 6-step pipeline (vision parsing → contextualization → extraction →
+  validation → mapping) compares the two documents.
+- **Structured legal change output**: executive summary, per-change risk level, before/after
+  text, evidence citations (`FinalAnalysisReport` v1 — see
+  [Milestone 2.2](docs/milestone-2.2-granular-legal-output.md)).
+- **Human-review recommendations** and validation warnings surfaced alongside the summary.
+- **Raw JSON auditability** — the full structured payload is viewable in the UI for every
+  completed analysis.
+
+## Stack
+
+| Component | Path | Role |
+|-----------|------|------|
+| Go API | `apps/api-go` | Upload documents, create analysis jobs, serve results |
+| Python Worker | `apps/worker-ai` | Poll queue, materialize documents, run AI pipeline |
+| Next.js Frontend | `apps/web` | Upload UI, job polling, result view |
+
+PostgreSQL is the **source of truth** for jobs, documents, results, and statuses. Cloud storage and queues are optional extensions (local defaults below; Azure is the active deployment target).
 
 ## Quick start (local)
 
@@ -68,6 +116,32 @@ QUEUE_PROVIDER=postgres
 UPLOADS_DIR=./uploads
 WORKER_USE_MOCK_RESULT=false   # set true to skip OpenAI during worker QA
 ```
+
+## Demo mode (mock vs real OpenAI)
+
+The worker has two modes, toggled by one env var (`WORKER_USE_MOCK_RESULT` locally,
+`worker_use_mock_result` in Terraform):
+
+| Mode | Behavior | Requires |
+|------|----------|----------|
+| **Mock** (`true`, default on the public demo) | Skips OpenAI entirely, returns a synthetic but schema-complete `FinalAnalysisReport` v1 | Nothing — no API key |
+| **Real** (`false`) | Runs the full 6-step OpenAI pipeline | `OPENAI_API_KEY` (local) or the `OPENAI-API-KEY` Key Vault secret (cloud) |
+
+The **public Azure demo runs in mock mode** so it can be shared freely with no OpenAI spend.
+See [`docs/demo-runbook.md`](docs/demo-runbook.md) for how to flip it to real mode.
+
+## Local vs cloud run modes
+
+| | Local | Cloud (Azure) |
+|---|---|---|
+| Storage | Filesystem (`STORAGE_PROVIDER=local`) | Blob Storage (`azure_blob`) |
+| Queue | PostgreSQL (`QUEUE_PROVIDER=postgres`) | Service Bus (`azure_service_bus`) |
+| Database | Local Docker Postgres | Private PostgreSQL Flexible Server (VNet) |
+| Frontend API URL | `NEXT_PUBLIC_API_BASE_URL` unset → falls back to `http://localhost:8080` | `NEXT_PUBLIC_API_BASE_URL` set to the Container App URL at build time |
+| Worker AI mode | Real by default (set `WORKER_USE_MOCK_RESULT=true` to mock) | Mock by default on the public demo |
+
+Switching between them is pure configuration — no code changes. See
+[`docs/architecture-azure.md`](docs/architecture-azure.md) for the full cloud env-var/secret contract.
 
 ## Cloud-ready (legacy AWS: S3 + SQS)
 
@@ -125,8 +199,31 @@ See [Milestone 4.H — Cloud E2E closure](docs/milestone-4.h-cloud-e2e-closure.m
 
 Archived AWS docs: [4.1](docs/milestone-4.1-terraform-foundation.md), [4.2](docs/milestone-4.2-rds-networking.md), [4.3](docs/milestone-4.3-ecs-task-definitions.md).
 
+**Cost controls & cleanup**: replica limits, mock mode, feature-flag toggles per resource, and
+the `terraform destroy` path (⚠️ deletes the live public demo) are documented in
+[`infra/terraform/azure/README.md`](infra/terraform/azure/README.md#cost-controls--teardown).
+
+## Known limitations
+
+- **Not legal advice** — outputs are AI-generated review support only; always reviewed by a human.
+- **No authentication** — the API and public demo are fully open. Strategy to close this gap:
+  [Milestone 6.1 — Auth strategy](docs/milestone-6.1-auth-strategy.md).
+- **No custom domain** — Azure auto-generated hostnames only (`*.azurestaticapps.net`, `*.azurecontainerapps.io`).
+- **No OCR for scanned PDFs** — text-based PDFs only; scanned/image-only PDFs are rejected with a clear error.
+- **No advanced CI/CD** — GitHub Actions covers the frontend deploy only; API/worker images and
+  migrations are pushed/run manually (see [`docs/demo-runbook.md`](docs/demo-runbook.md)).
+- **No reaper for stale jobs** — a job stuck in `QUEUED` (e.g. a lost queue message) has no
+  automatic timeout to mark it `FAILED`.
+- `/health` checks the API process only, not PostgreSQL connectivity.
+
+Full list with rationale: [`docs/milestone-5.4-demo-package.md`](docs/milestone-5.4-demo-package.md#known-limitations).
+
 ## Documentation
 
+- [Milestone 6.1 — Auth strategy + multi-user data model](docs/milestone-6.1-auth-strategy.md) — Entra External ID decision, data model, authorization policy, block plan (Block 6.1)
+- [`docs/architecture-azure.md`](docs/architecture-azure.md) — Azure architecture diagram, resource inventory, API routes
+- [`docs/demo-runbook.md`](docs/demo-runbook.md) — demo walkthrough, operate (mock/real mode, rebuild/deploy, migrations), troubleshooting
+- [Milestone 5.4 — Demo package + portfolio docs](docs/milestone-5.4-demo-package.md) — portfolio highlights, known limitations, screenshot guide, Milestone 5 closure (Block 5.4)
 - [Milestone 2.3 — PDF native + S3/SQS](docs/milestone-2.3-pdf-native.md) — full architecture and block history
 - [Milestone 3 — Frontend MVP](docs/milestone-3-frontend-mvp.md) — UI flows and local setup
 - [Milestone 5.3 — Public demo QA](docs/milestone-5.3-public-demo-qa.md) — provision + deploy SWA, full public-demo QA, polish, troubleshooting (Block 5.3)
@@ -164,10 +261,11 @@ Milestone 2.3 (Blocks 1–8) is **complete** for local and cloud-ready paths:
 - Block 4.G (Cloud migrations + QA): Container Apps Job for SQL schema, E2E runbook — **done**
 - Block 4.H (Cloud E2E QA + closure): validation, CORS config, limitations, Milestone 4 sign-off — **done**
 
-**Milestone 5 — Frontend hosting + public demo: in progress.**
+**Milestone 5 — Frontend hosting + public demo: closed.**
 
 - Block 5.1 (Azure Static Web Apps strategy + Terraform module): **done** — see [Milestone 5.1](docs/milestone-5.1-azure-static-web-apps-strategy.md)
 - Block 5.2 (GitHub Actions CI/CD + static export + public deploy): **done** — see [Milestone 5.2](docs/milestone-5.2-frontend-public-deploy.md)
 - Block 5.3 (public demo QA + polish): **done** — SWA provisioned + deployed, full E2E QA, CORS image fix, light copy polish — see [Milestone 5.3](docs/milestone-5.3-public-demo-qa.md)
+- Block 5.4 (demo package + portfolio documentation): **done** — architecture doc, demo runbook, cost controls, troubleshooting, portfolio highlights, Milestone 5 sign-off — see [Milestone 5.4](docs/milestone-5.4-demo-package.md)
 
 Archived AWS blocks (reference only): 4.1 (ECR/S3/SQS), 4.2 (VPC/RDS), 4.3 (ECS task defs). Dockerfiles remain reusable for Azure Container Apps.
